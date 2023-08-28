@@ -18,9 +18,23 @@ app.get('/', (req, res)=>{
     res.render('index', {songList:songList.filter((val)=>fs.statSync(`./songs/${val}`).isDirectory())});
 });
 
-app.get('/song/:name', (req, res)=>{
-    
+app.get('/getSongListDataByName/:name', (req, res)=>{
+    const name = req.params.name;
+    const songListData = fs.readdirSync(`./songs/${name}`);
+    //console.log(songListData.filter((val)=>val.endsWith('.osu')));
+    res.send(songListData.filter((val)=>val.endsWith('.osu')));
 });
+
+app.get('/song/:songName/:fileName', (req, res)=>{
+    res.render('song');
+});
+
+app.get('/getFileData/:songName/:fileName', (req, res)=>{
+    const songName = req.params.songName;
+    const fileName = req.params.fileName;
+    const data = fs.readFileSync(`./songs/${songName}/${fileName}`, {encoding:'utf8'});
+    res.send(data);
+})
 
 server.listen(10101, () => {
     console.log('listening on *:10101');

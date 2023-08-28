@@ -58,27 +58,6 @@
                 <% } %>
         </div>
     </div>
-    <div class="container-fluid text-center p-3 my-3">
-        <h4>곡 리스트</h4>
-        <table class="table table-bordered table-striped-columns">
-            <thead>
-                <th scope="col">#</th>
-                <th scope="col">제목</th>
-            </thead>
-            <tbody>
-                <% for(x in songList) { %>
-                    <tr onclick="location.href=`/song/<%=songList[x]%>`;">
-                        <th scope="row">
-                            <%=parseInt(x)+1%>
-                        </th>
-                        <td>
-                            <%=songList[x]%>
-                        </td>
-                    </tr>
-                    <% } %>
-            </tbody>
-        </table>
-    </div>
 </body>
 
 </html>

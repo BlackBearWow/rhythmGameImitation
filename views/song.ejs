@@ -9,22 +9,119 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script>
-        $(document).ready(()=>{
+        let can;        //canvas 객체
+        let ctx;        //context객체를 얻어야 drawimage와 filltext를 할 수 있음
+        let mainInterval;   //interval변수
+        //osu file format분석에 필요한 변수들
+        //object와 배열로 만들 것이다.
+        let General;
+        let Editor;
+        let Metadata;
+        let Difficulty;
+        let Events;
+        let TimingPoints;
+        let Colours;
+        let HitObjects;
+
+        $(document).ready(() => {
             getFileData();
         })
-        function getFileData(){
+        function getFileData() {
             const songName = window.location.pathname.split('/')[2];
             const fileName = window.location.pathname.split('/')[3];
             $.ajax({
-                    url: `/getFileData/${songName}/${fileName}`,
-                    type: "get",
-                    success: function (data) {
-                        console.log(data);
-                    },
-                    error: function (error) {
-                        console.log(error);
-                    }
-                });
+                url: `/getFileData/${songName}/${fileName}`,
+                type: "get",
+                success: function (data) {
+                    analyseFileData(data);
+                },
+                error: function (error) {
+                    console.log(error);
+                }
+            });
+        }
+        function analyseFileData(data) {
+            General = data.match(/(?<=\[General\])([\s\S]*?)(?=\[Editor\]|\[Metadata\]|\[Difficulty\]|\[Events\]|\[TimingPoints\]|\[Colours\]|\[HitObjects\])/);
+            analyseGeneral();
+            Editor = data.match(/(?<=\[Editor\])([\s\S]*?)(?=\[Metadata\]|\[Difficulty\]|\[Events\]|\[TimingPoints\]|\[Colours\]|\[HitObjects\])/);
+            analyseEditor();
+            Metadata = data.match(/(?<=\[Metadata\])([\s\S]*?)(?=\[Difficulty\]|\[Events\]|\[TimingPoints\]|\[Colours\]|\[HitObjects\])/);
+            analyseMetadata();
+            Difficulty = data.match(/(?<=\[Difficulty\])([\s\S]*?)(?=\[Events\]|\[TimingPoints\]|\[Colours\]|\[HitObjects\])/);
+            analyseDifficulty();
+            Events = data.match(/(?<=\[Events\])([\s\S]*?)(?=\[TimingPoints\]|\[Colours\]|\[HitObjects\])/);
+            analyseEvents();
+            TimingPoints = data.match(/(?<=\[TimingPoints\])([\s\S]*?)(?=\[Colours\]|\[HitObjects\])/);
+            analyseTimingPoints();
+            Colours = data.match(/(?<=\[Colours\])([\s\S]*?)(?=\[HitObjects\])/);
+            analyseColours();
+            HitObjects = data.match(/(?<=\[HitObjects\])([\s\S]*)/);
+            analyseHitObjects();
+        }
+        function analyseGeneral() {
+            if (General) {
+                General = General[0].trim();
+                let temp = {};
+                General.split('\n').forEach((val, index)=>{
+                    temp[val.split(':')[0].trim()] = val.split(':')[1].trim();
+                })
+                General = temp;
+            }
+            if(General.Mode != 3) {
+                alert('매니아 모드 맵이 아닙니다.');
+                history.go(-1);
+            }
+            console.log(General);
+        }
+        function analyseEditor() {
+            if (Editor) {
+                Editor = Editor[0].trim();
+                let temp = {};
+                Editor.split('\n').forEach((val, index)=>{
+                    temp[val.split(':')[0].trim()] = val.split(':')[1].trim();
+                })
+                Editor = temp;
+            }
+        }
+        function analyseMetadata() {
+            if (Metadata) {
+                Metadata = Metadata[0].trim();
+                let temp = {};
+                Metadata.split('\n').forEach((val, index)=>{
+                    temp[val.split(':')[0].trim()] = val.split(':')[1].trim();
+                })
+                Metadata = temp;
+            }
+        }
+        function analyseDifficulty() {
+            if (Difficulty) {
+                Difficulty = Difficulty[0].trim();
+                let temp = {};
+                Difficulty.split('\n').forEach((val, index)=>{
+                    temp[val.split(':')[0].trim()] = val.split(':')[1].trim();
+                })
+                Difficulty = temp;
+            }
+        }
+        function analyseEvents() {
+            if (Events) {
+                Events = Events[0].trim();
+            }
+        }
+        function analyseTimingPoints() {
+            if (TimingPoints) {
+                TimingPoints = TimingPoints[0].trim();
+            }
+        }
+        function analyseColours() {
+            if (Colours) {
+                Colours = Colours[0].trim();
+            }
+        }
+        function analyseHitObjects() {
+            if (HitObjects) {
+                HitObjects = HitObjects[0].trim();
+            }
         }
     </script>
 </head>

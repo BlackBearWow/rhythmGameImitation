@@ -14,6 +14,7 @@
         let can;        //canvas 객체
         let ctx;        //context객체를 얻어야 drawimage와 filltext를 할 수 있음
         let mainInterval;   //interval변수
+        let keyBoard = { d: { pressing: false, press: false }, f: { pressing: false, press: false }, j: { pressing: false, press: false }, k: { pressing: false, press: false } };
         //osu file format분석에 필요한 변수들
         //object와 배열로 만들 것이다.
         let General;
@@ -25,25 +26,51 @@
         let Colours;
         let HitObjects;
         //게임에서 사용하는 변수
-        let height=100;
+        let height = 100;
         let bgm;
         //시간
-        let startTime;
-        let currentTime;
+        let startTime, currentTime, flowTime;
+        //draw에 필요한 변수들
+        const keyHeight = 100;
+        const keyGapPixel = 2;
+        const dfjkGap = { x: 30, y: 75 };
+        let timePixelConst = 1.2;
+        const timeCutLine = 80;
+        //
+        let combo = 0;
+        let comboFontSize = 60;
+        let hitStatus = ''; //miss hit
+        let hitFontSize = 60;
 
         $(document).ready(() => {
             can = document.getElementById("can");
-			ctx = can.getContext("2d");
+            ctx = can.getContext("2d");
             getFileData();
             $("#can").keydown(function (e) {
-				if (e.key == " ") {
-                    if(!mainInterval) {
+                if (e.key == 'd' | e.key == 'f' | e.key == 'j' | e.key == 'k') {
+                    //처음 눌렀을때만 press가 true가 된다.
+                    if (keyBoard[e.key]['pressing'] == false)
+                        keyBoard[e.key]['press'] = true;
+                    else
+                        keyBoard[e.key]['press'] = false;
+                    keyBoard[e.key]['pressing'] = true;
+                }
+                else if (e.key == " ") {
+                    if (!mainInterval) {
+                        //setTimeout(()=>{bgm.play();}, parseInt(General['AudioLeadIn']));
+                        //General['AudioLeadIn']은 전체적인 시작 자체를 늦추는 것이다. 오디오만의 싱크를 위한 것이 아님.
                         bgm.play();
-                        mainInterval = setInterval(oneFrame, 10);
+                        mainInterval = setInterval(oneFrame, 5);
                         startTime = new Date().getTime();
                     }
-				}
-			});
+                }
+            });
+            $("#can").keyup(function (e) {
+                if (e.key == 'd' | e.key == 'f' | e.key == 'j' | e.key == 'k') {
+                    keyBoard[e.key]['press'] = false;
+                    keyBoard[e.key]['pressing'] = false;
+                }
+            });
         })
         function alertAndHistoryBack(msg) {
             alert(msg);
@@ -177,28 +204,37 @@
                         //console.log(val.split(',')[5].match(/[^:]+/)[0]);
                     }
                 })
-                console.log(temp);
+                HitObjects = temp;
+                console.log(HitObjects);
             }
             else {
                 alertAndHistoryBack('hitObject가 없습니다.');
             }
         }
         function setBackGround() {
-            //Background and Video events가 배열이라면 [0]은 배경, [1]은 영상이고, 배열이 아니라면 배경이다.
+            //Background and Video events가 배열이라면 배경과 영상이 배열에 담겨있고, 배열이 아니라면 배경이다.
             if (typeof (Events['Background and Video events']) == "string") {
                 $('#mainDiv').append(`<img src="/songs/${songName}/${Events['Background and Video events'].match(/(?<=")[^"]+/)[0]}" style="width: 100%;position: absolute;object-fit: cover;z-index:-1">`)
             }
             else {
-                $('#mainDiv').append(`<img src="/songs/${songName}/${Events['Background and Video events'][0].match(/(?<=")[^"]+/)[0]}" style="width: 100%;position: absolute;object-fit: cover;z-index:-1">`)
+                if(/[^,]+,[^,]+,[^,]+,[^,]+,[^,]+/.test(Events['Background and Video events'][0])) {
+                    //0번째 index가 배경이미지일경우
+                    $('#mainDiv').append(`<img src="/songs/${songName}/${Events['Background and Video events'][0].match(/(?<=")[^"]+/)[0]}" style="width: 100%;position: absolute;object-fit: cover;z-index:-1">`)
+                }
+                else {
+                    //1번째 index가 배경이미지일경우
+                    $('#mainDiv').append(`<img src="/songs/${songName}/${Events['Background and Video events'][1].match(/(?<=")[^"]+/)[0]}" style="width: 100%;position: absolute;object-fit: cover;z-index:-1">`)
+                }
             }
         }
 
         function initialize() {
             height = can.clientHeight;
+            can.height = height;
             ctx.fillRect(0, 0, 400, height);
             ctx.fillStyle = "white";
-            ctx.font = "60px Comic Arial";
-            ctx.fillText("press space", 10, 100);
+            ctx.font = "70px Comic Arial";
+            ctx.fillText("press space", 40, 300);
         }
         function oneFrame() {
             logic();
@@ -206,19 +242,390 @@
         }
         function logic() {
             currentTime = new Date().getTime();
+            flowTime = currentTime - startTime;
+            hitLogic();
+            missLogic();
+            fontSizeCalculate();
+        }
+        function hitLogic() {
+            //keydown으로는 initialDelay가 있어 직접 press를 설정해야 한다. press가 true라면 false로 바꾸자.
+            //d 64
+            if (HitObjects[64].length != 0) {
+                if (HitObjects[64][0][1] == 0) { //단일 노트라면
+                    if (keyBoard['d']['press']) {
+                        const timeGap = parseInt(HitObjects[64][0][0]) - flowTime;
+                        if (timeGap <= timeCutLine) {
+                            hitMiss('hit');
+                            HitObjects[64].shift();
+                        }
+                        keyBoard['d']['press'] = false;
+                    }
+                }
+                else {  //hold 노트라면
+                    if (keyBoard['d']['press']) {
+                        const timeGap = parseInt(HitObjects[64][0][0]) - flowTime;
+                        if (timeGap <= timeCutLine) {
+                            hitMiss('hit');
+                        }
+                        keyBoard['d']['press'] = false;
+                    }
+                    else if (keyBoard['d']['pressing']) {
+                        const timeGap1 = parseInt(HitObjects[64][0][0]) - flowTime;
+                        const timeGap2 = flowTime - parseInt(HitObjects[64][0][1]);
+                        if ((timeGap1 <= timeCutLine) && (timeGap2 <= timeCutLine)) {
+                            hitMiss('hit');
+                        }
+                    }
+                    else {
+                        if (Math.abs(flowTime - parseInt(HitObjects[64][0][1])) <= timeCutLine) {
+                            HitObjects[64].shift();
+                        }
+                    }
+                }
+            }
+            //f 192
+            if (HitObjects[192].length != 0) {
+                if (HitObjects[192][0][1] == 0) { //단일 노트라면
+                    if (keyBoard['f']['press']) {
+                        const timeGap = parseInt(HitObjects[192][0][0]) - flowTime;
+                        if (timeGap <= timeCutLine) {
+                            hitMiss('hit');
+                            HitObjects[192].shift();
+                        }
+                        keyBoard['f']['press'] = false;
+                    }
+                }
+                else {  //hold 노트라면
+                    if (keyBoard['f']['press']) {
+                        const timeGap = parseInt(HitObjects[192][0][0]) - flowTime;
+                        if (timeGap <= timeCutLine) {
+                            hitMiss('hit');
+                        }
+                        keyBoard['f']['press'] = false;
+                    }
+                    else if (keyBoard['f']['pressing']) {
+                        const timeGap1 = parseInt(HitObjects[192][0][0]) - flowTime;
+                        const timeGap2 = flowTime - parseInt(HitObjects[192][0][1]);
+                        if ((timeGap1 <= timeCutLine) && (timeGap2 <= timeCutLine)) {
+                            hitMiss('hit');
+                        }
+                    }
+                    else {
+                        if (Math.abs(flowTime - parseInt(HitObjects[192][0][1])) <= timeCutLine) {
+                            HitObjects[192].shift();
+                        }
+                    }
+                }
+            }
+            //j 320
+            if (HitObjects[320].length != 0) {
+                if (HitObjects[320][0][1] == 0) { //단일 노트라면
+                    if (keyBoard['j']['press']) {
+                        const timeGap = parseInt(HitObjects[320][0][0]) - flowTime;
+                        if (timeGap <= timeCutLine) {
+                            hitMiss('hit');
+                            HitObjects[320].shift();
+                        }
+                        keyBoard['j']['press'] = false;
+                    }
+                }
+                else {  //hold 노트라면
+                    if (keyBoard['j']['press']) {
+                        const timeGap = parseInt(HitObjects[320][0][0]) - flowTime;
+                        if (timeGap <= timeCutLine) {
+                            hitMiss('hit');
+                        }
+                        keyBoard['j']['press'] = false;
+                    }
+                    else if (keyBoard['j']['pressing']) {
+                        const timeGap1 = parseInt(HitObjects[320][0][0]) - flowTime;
+                        const timeGap2 = flowTime - parseInt(HitObjects[320][0][1]);
+                        if ((timeGap1 <= timeCutLine) && (timeGap2 <= timeCutLine)) {
+                            hitMiss('hit');
+                        }
+                    }
+                    else {
+                        if (Math.abs(flowTime - parseInt(HitObjects[320][0][1])) <= timeCutLine) {
+                            HitObjects[320].shift();
+                        }
+                    }
+                }
+            }
+            //k 448
+            if (HitObjects[448].length != 0) {
+                if (HitObjects[448][0][1] == 0) { //단일 노트라면
+                    if (keyBoard['k']['press']) {
+                        const timeGap = parseInt(HitObjects[448][0][0]) - flowTime;
+                        if (timeGap <= timeCutLine) {
+                            hitMiss('hit');
+                            HitObjects[448].shift();
+                        }
+                        keyBoard['k']['press'] = false;
+                    }
+                }
+                else {  //hold 노트라면
+                    if (keyBoard['k']['press']) {
+                        const timeGap = parseInt(HitObjects[448][0][0]) - flowTime;
+                        if (timeGap <= timeCutLine) {
+                            hitMiss('hit');
+                        }
+                        keyBoard['k']['press'] = false;
+                    }
+                    else if (keyBoard['k']['pressing']) {
+                        const timeGap1 = parseInt(HitObjects[448][0][0]) - flowTime;
+                        const timeGap2 = flowTime - parseInt(HitObjects[448][0][1]);
+                        if ((timeGap1 <= timeCutLine) && (timeGap2 <= timeCutLine)) {
+                            hitMiss('hit');
+                        }
+                    }
+                    else {
+                        if (Math.abs(flowTime - parseInt(HitObjects[448][0][1])) <= timeCutLine) {
+                            HitObjects[448].shift();
+                        }
+                    }
+                }
+            }
+        }
+        function missLogic() {
+            //d
+            if (HitObjects[64].length != 0) {
+                if (HitObjects[64][0][1] == 0) { //단일 노트라면
+                    const timeGap = parseInt(HitObjects[64][0][0]) - flowTime;
+                    if (timeGap <= -timeCutLine) {
+                        HitObjects[64].shift();
+                        hitMiss('miss');
+                    }
+                }
+                else {  //hold 노트라면
+                    const timeGap = parseInt(HitObjects[64][0][0]) - flowTime;
+                    const timeGap2 = parseInt(HitObjects[64][0][1]) - flowTime;
+                    //처음 누를 때가 지나갔는데 키를 누르고있지 않다면
+                    if ((timeGap <= -timeCutLine) && !keyBoard['d']['pressing']) {
+                        HitObjects[64].shift();
+                        hitMiss('miss');
+                    }
+                    //마지막 뗄 떼가 지나가면
+                    else if (timeGap2 <= -timeCutLine) {
+                        HitObjects[64].shift();
+                        hitMiss('miss');
+                    }
+                }
+            }
+            //f
+            if (HitObjects[192].length != 0) {
+                if (HitObjects[192][0][1] == 0) { //단일 노트라면
+                    const timeGap = parseInt(HitObjects[192][0][0]) - flowTime;
+                    if (timeGap <= -timeCutLine) {
+                        HitObjects[192].shift();
+                        hitMiss('miss');
+                    }
+                }
+                else {  //hold 노트라면
+                    const timeGap = parseInt(HitObjects[192][0][0]) - flowTime;
+                    const timeGap2 = parseInt(HitObjects[192][0][1]) - flowTime;
+                    //처음 누를 때가 지나갔는데 키를 누르고있지 않다면
+                    if ((timeGap <= -timeCutLine) && !keyBoard['f']['pressing']) {
+                        HitObjects[192].shift();
+                        hitMiss('miss');
+                    }
+                    //마지막 뗄 떼가 지나가면
+                    if (timeGap2 <= -timeCutLine) {
+                        HitObjects[192].shift();
+                        hitMiss('miss');
+                    }
+                }
+            }
+            //j
+            if (HitObjects[320].length != 0) {
+                if (HitObjects[320][0][1] == 0) { //단일 노트라면
+                    const timeGap = parseInt(HitObjects[320][0][0]) - flowTime;
+                    if (timeGap <= -timeCutLine) {
+                        HitObjects[320].shift();
+                        hitMiss('miss');
+                    }
+                }
+                else {  //hold 노트라면
+                    const timeGap = parseInt(HitObjects[320][0][0]) - flowTime;
+                    const timeGap2 = parseInt(HitObjects[320][0][1]) - flowTime;
+                    //처음 누를 때가 지나갔는데 키를 누르고있지 않다면
+                    if ((timeGap <= -timeCutLine) && !keyBoard['j']['pressing']) {
+                        HitObjects[320].shift();
+                        hitMiss('miss');
+                    }
+                    //마지막 뗄 떼가 지나가면
+                    if (timeGap2 <= -timeCutLine) {
+                        HitObjects[320].shift();
+                        hitMiss('miss');
+                    }
+                }
+            }
+            //k
+            if (HitObjects[448].length != 0) {
+                if (HitObjects[448][0][1] == 0) { //단일 노트라면
+                    const timeGap = parseInt(HitObjects[448][0][0]) - flowTime;
+                    if (timeGap <= -timeCutLine) {
+                        HitObjects[448].shift();
+                        hitMiss('miss');
+                    }
+                }
+                else {  //hold 노트라면
+                    const timeGap = parseInt(HitObjects[448][0][0]) - flowTime;
+                    const timeGap2 = parseInt(HitObjects[448][0][1]) - flowTime;
+                    //처음 누를 때가 지나갔는데 키를 누르고있지 않다면
+                    if ((timeGap <= -timeCutLine) && !keyBoard['k']['pressing']) {
+                        HitObjects[448].shift();
+                        hitMiss('miss');
+                    }
+                    //마지막 뗄 떼가 지나가면
+                    if (timeGap2 <= -timeCutLine) {
+                        HitObjects[448].shift();
+                        hitMiss('miss');
+                    }
+                }
+            }
+        }
+        function hitMiss(what) {
+            comboFontSize = 60; hitFontSize = 60;
+            if (what == "hit") {
+                combo++; hitStatus = "hit";
+            }
+            else if (what == 'miss') {
+                combo = 0; hitStatus = "miss";
+            }
+        }
+        function fontSizeCalculate() {
+            if (comboFontSize > 50)
+                comboFontSize--;
+            if (hitFontSize > 50)
+                hitFontSize--;
         }
         function draw() {
             height = can.clientHeight;
+            can.height = height;
             drawBackGround();
+            drawNotes();
+            drawComboAndHitStatus();
         }
         function drawBackGround() {
-            const keyHeight = 150;
+            //검정 배경
             ctx.fillStyle = "black";
             ctx.fillRect(0, 0, 400, height);
-            ctx.fillStyle = "#FF0000";
-            ctx.fillRect(0, 50, 100, 100);
-            ctx.fillRect(100, 90, 100, 100);
-            ctx.fillRect(0, height-keyHeight, 100, keyHeight);
+            //키 보이기
+            if(keyBoard['d']['pressing']) {
+                ctx.fillStyle = "#FF00FF";
+            }
+            else ctx.fillStyle = "#9400D3";
+            ctx.fillRect(keyGapPixel, height - keyHeight, 100 - keyGapPixel, keyHeight);
+            if(keyBoard['f']['pressing']) {
+                ctx.fillStyle = "#FF00FF";
+            }
+            else ctx.fillStyle = "#9400D3";
+            ctx.fillRect(keyGapPixel + 100, height - keyHeight, 100 - keyGapPixel, keyHeight);
+            if(keyBoard['j']['pressing']) {
+                ctx.fillStyle = "#FF00FF";
+            }
+            else ctx.fillStyle = "#9400D3";
+            ctx.fillRect(keyGapPixel + 200, height - keyHeight, 100 - keyGapPixel, keyHeight);
+            if(keyBoard['k']['pressing']) {
+                ctx.fillStyle = "#FF00FF";
+            }
+            else ctx.fillStyle = "#9400D3";
+            ctx.fillRect(keyGapPixel + 300, height - keyHeight, 100 - keyGapPixel, keyHeight);
+            //줄 보이기
+            ctx.fillStyle = "#696969";
+            ctx.fillRect(0, 0, keyGapPixel, height);
+            ctx.fillRect(100 - keyGapPixel, 0, keyGapPixel * 2, height);
+            ctx.fillRect(200 - keyGapPixel, 0, keyGapPixel * 2, height);
+            ctx.fillRect(300 - keyGapPixel, 0, keyGapPixel * 2, height);
+            ctx.fillRect(400 - keyGapPixel, 0, keyGapPixel, height);
+            //dfjk보이기
+            ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+            ctx.font = "60px Comic Arial";
+            ctx.fillText("D", keyGapPixel + dfjkGap.x, height - keyHeight + dfjkGap.y);
+            ctx.fillText("F", keyGapPixel + dfjkGap.x + 100, height - keyHeight + dfjkGap.y);
+            ctx.fillText("J", keyGapPixel + dfjkGap.x + 200, height - keyHeight + dfjkGap.y);
+            ctx.fillText("K", keyGapPixel + dfjkGap.x + 300, height - keyHeight + dfjkGap.y);
+            //키 바로 위 줄 보이기
+            ctx.fillStyle = "#D3D3D3";
+            ctx.fillRect(0, height - keyHeight - 10, 400, 10);
+        }
+        function drawNotes() {
+            //노트들의 시간은 어떻게 할까?
+            //노트의 시간과 현재 시간이 1초 사이라면 보여줘보자.
+            ctx.fillStyle = "#AFEEEE";
+            for (let i = 0; i < HitObjects[64].length; i++) {
+                if (HitObjects[64][i][1] == 0) { //단일 노트라면
+                    const timeGap = parseInt(HitObjects[64][i][0]) - flowTime;
+                    if (timeGap >= 1000) break;
+                    ctx.fillRect(0, height - keyHeight - timeGap * timePixelConst, 100, 10);
+                }
+                else {  //hold 노트라면
+                    //현재 지난 시간과 hold노트의 시작시간의 차이다. 1초 이상 차이난다면 break;
+                    if ((parseInt(HitObjects[64][i][0]) - flowTime) >= 1000) break;
+                    //tineGap2는 hold노트의 끝나는시간과 현재 지난 시간의 차이다. fillRect의 출발 지점을 알아내기 위해 필요
+                    const timeGap2 = parseInt(HitObjects[64][i][1]) - flowTime;
+                    //noteHeight는 hold노트의 길이이다.
+                    const noteHeight = (HitObjects[64][i][1] - HitObjects[64][i][0]) * timePixelConst;
+                    ctx.fillRect(0, height - keyHeight - timeGap2 * timePixelConst, 100, noteHeight + 10);
+                }
+            }
+            for (let i = 0; i < HitObjects[192].length; i++) {
+                if (HitObjects[192][i][1] == 0) { //단일 노트라면
+                    const timeGap = parseInt(HitObjects[192][i][0]) - flowTime;
+                    if (timeGap >= 1000) break;
+                    ctx.fillRect(100, height - keyHeight - timeGap * timePixelConst, 100, 10);
+                }
+                else {  //hold 노트라면
+                    //현재 지난 시간과 hold노트의 시작시간의 차이다. 1초 이상 차이난다면 break;
+                    if ((parseInt(HitObjects[192][i][0]) - flowTime) >= 1000) break;
+                    //tineGap2는 hold노트의 끝나는시간과 현재 지난 시간의 차이다. fillRect의 출발 지점을 알아내기 위해 필요
+                    const timeGap2 = parseInt(HitObjects[192][i][1]) - flowTime;
+                    //noteHeight는 hold노트의 길이이다.
+                    const noteHeight = (HitObjects[192][i][1] - HitObjects[192][i][0]) * timePixelConst;
+                    ctx.fillRect(100, height - keyHeight - timeGap2 * timePixelConst, 100, noteHeight + 10);
+                }
+            }
+            for (let i = 0; i < HitObjects[320].length; i++) {
+                if (HitObjects[320][i][1] == 0) { //단일 노트라면
+                    const timeGap = parseInt(HitObjects[320][i][0]) - flowTime;
+                    if (timeGap >= 1000) break;
+                    ctx.fillRect(200, height - keyHeight - timeGap * timePixelConst, 100, 10);
+                }
+                else {  //hold 노트라면
+                    //현재 지난 시간과 hold노트의 시작시간의 차이다. 1초 이상 차이난다면 break;
+                    if ((parseInt(HitObjects[320][i][0]) - flowTime) >= 1000) break;
+                    //tineGap2는 hold노트의 끝나는시간과 현재 지난 시간의 차이다. fillRect의 출발 지점을 알아내기 위해 필요
+                    const timeGap2 = parseInt(HitObjects[320][i][1]) - flowTime;
+                    //noteHeight는 hold노트의 길이이다.
+                    const noteHeight = (HitObjects[320][i][1] - HitObjects[320][i][0]) * timePixelConst;
+                    ctx.fillRect(200, height - keyHeight - timeGap2 * timePixelConst, 100, noteHeight + 10);
+                }
+            }
+            for (let i = 0; i < HitObjects[448].length; i++) {
+                if (HitObjects[448][i][1] == 0) { //단일 노트라면
+                    const timeGap = parseInt(HitObjects[448][i][0]) - flowTime;
+                    if (timeGap >= 1000) break;
+                    ctx.fillRect(300, height - keyHeight - timeGap * timePixelConst, 100, 10);
+                }
+                else {  //hold 노트라면
+                    //현재 지난 시간과 hold노트의 시작시간의 차이다. 1초 이상 차이난다면 break;
+                    if ((parseInt(HitObjects[448][i][0]) - flowTime) >= 1000) break;
+                    //tineGap2는 hold노트의 끝나는시간과 현재 지난 시간의 차이다. fillRect의 출발 지점을 알아내기 위해 필요
+                    const timeGap2 = parseInt(HitObjects[448][i][1]) - flowTime;
+                    //noteHeight는 hold노트의 길이이다.
+                    const noteHeight = (HitObjects[448][i][1] - HitObjects[448][i][0]) * timePixelConst;
+                    ctx.fillRect(300, height - keyHeight - timeGap2 * timePixelConst, 100, noteHeight + 10);
+                }
+            }
+        }
+        function drawComboAndHitStatus() {
+            ctx.fillStyle = "white";
+            ctx.font = `${comboFontSize}px Comic Arial`;
+            ctx.fillText(combo, 180, height - keyHeight - 500);
+            ctx.font = `${hitFontSize}px Comic Arial`;
+            if (hitStatus == 'hit') ctx.fillStyle = "white";
+            else ctx.fillStyle = "red";
+            ctx.fillText(hitStatus, 180, height - keyHeight - 300);
         }
     </script>
 </head>
@@ -226,9 +633,9 @@
 <body>
     <div id="mainDiv" class="position-relative overflow-hidden" style="height:100vh">
         <div class="position-absolute" style="top:0px;left:200px;height:100%;">
+            <canvas class="border" id="can" style="width:400px;height:100%;" width="400px" tabindex='1'></canvas>
         </div>
     </div>
-    <canvas class="border" id="can" style="width:400px;height:100%;" tabindex='1'></canvas>
     <!--div class="image-container">
         <img src="https://image-cdn.hypb.st/https%3A%2F%2Fkr.hypebeast.com%2Ffiles%2F2023%2F06%2Fchristopher-nolan-agrees-oppenheimer-is-a-horror-movie-ft.jpeg?fit=max&cbr=1&q=90&w=750&h=500" alt="Your Image">
       </div-->

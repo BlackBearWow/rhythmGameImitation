@@ -11,6 +11,9 @@ app.use(express.urlencoded());
 app.set('views', __dirname + '/views');
 app.set('view engine', 'ejs');
 
+// Function to serve static files
+app.use('/songs', express.static('songs'));
+
 app.get('/', (req, res)=>{
     //디렉토리를 읽은 후 리듬게임 리스트를 전송함.
     const songList = fs.readdirSync('./songs');

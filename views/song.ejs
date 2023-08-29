@@ -9,6 +9,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script>
+        //url
+        let songName, fileName;
         let can;        //canvas 객체
         let ctx;        //context객체를 얻어야 drawimage와 filltext를 할 수 있음
         let mainInterval;   //interval변수
@@ -22,18 +24,40 @@
         let TimingPoints;
         let Colours;
         let HitObjects;
+        //게임에서 사용하는 변수
+        let height=100;
+        let bgm;
+        //시간
+        let startTime;
+        let currentTime;
 
         $(document).ready(() => {
+            can = document.getElementById("can");
+			ctx = can.getContext("2d");
             getFileData();
+            $("#can").keydown(function (e) {
+				if (e.key == " ") {
+                    if(!mainInterval) {
+                        bgm.play();
+                        mainInterval = setInterval(oneFrame, 10);
+                        startTime = new Date().getTime();
+                    }
+				}
+			});
         })
+        function alertAndHistoryBack(msg) {
+            alert(msg);
+            history.go(-1);
+        }
         function getFileData() {
-            const songName = window.location.pathname.split('/')[2];
-            const fileName = window.location.pathname.split('/')[3];
+            songName = window.location.pathname.split('/')[2];
+            fileName = window.location.pathname.split('/')[3];
             $.ajax({
                 url: `/getFileData/${songName}/${fileName}`,
                 type: "get",
                 success: function (data) {
                     analyseFileData(data);
+                    initialize();
                 },
                 error: function (error) {
                     console.log(error);
@@ -62,22 +86,22 @@
             if (General) {
                 General = General[0].trim();
                 let temp = {};
-                General.split('\n').forEach((val, index)=>{
+                General.split('\n').forEach((val, index) => {
                     temp[val.split(':')[0].trim()] = val.split(':')[1].trim();
                 })
                 General = temp;
+                bgm = new Audio(`/songs/${songName}/${General.AudioFilename}`);
             }
-            if(General.Mode != 3) {
-                alert('매니아 모드 맵이 아닙니다.');
-                history.go(-1);
+            if (General.Mode != 3) {
+                alertAndHistoryBack('매니아 모드 맵이 아닙니다.');
             }
-            console.log(General);
+            //console.log(General);
         }
         function analyseEditor() {
             if (Editor) {
                 Editor = Editor[0].trim();
                 let temp = {};
-                Editor.split('\n').forEach((val, index)=>{
+                Editor.split('\n').forEach((val, index) => {
                     temp[val.split(':')[0].trim()] = val.split(':')[1].trim();
                 })
                 Editor = temp;
@@ -87,7 +111,7 @@
             if (Metadata) {
                 Metadata = Metadata[0].trim();
                 let temp = {};
-                Metadata.split('\n').forEach((val, index)=>{
+                Metadata.split('\n').forEach((val, index) => {
                     temp[val.split(':')[0].trim()] = val.split(':')[1].trim();
                 })
                 Metadata = temp;
@@ -97,21 +121,38 @@
             if (Difficulty) {
                 Difficulty = Difficulty[0].trim();
                 let temp = {};
-                Difficulty.split('\n').forEach((val, index)=>{
+                Difficulty.split('\n').forEach((val, index) => {
                     temp[val.split(':')[0].trim()] = val.split(':')[1].trim();
                 })
                 Difficulty = temp;
+                //CircleSize:4는 4key를 의미한다.
+                if (Difficulty.CircleSize != 4) {
+                    alertAndHistoryBack('4key가 아닙니다. 현재 4key만 지원합니다');
+                }
+            }
+            else {
+                alertAndHistoryBack('difficulty가 없습니다');
             }
         }
         function analyseEvents() {
             if (Events) {
                 Events = Events[0].trim();
+                let temp = {};
+                Events.match(/\/\/[^\/]+/g).forEach((val, index) => {
+                    if (val.split('\r\n')[2])
+                        temp[val.split('\r\n')[0].replaceAll('/', '')] = [val.split('\r\n')[1], val.split('\r\n')[2]];
+                    else
+                        temp[val.split('\r\n')[0].replaceAll('/', '')] = val.split('\r\n')[1];
+                })
+                Events = temp;
+                setBackGround();
             }
         }
         function analyseTimingPoints() {
             if (TimingPoints) {
                 TimingPoints = TimingPoints[0].trim();
             }
+            //console.log(TimingPoints);
         }
         function analyseColours() {
             if (Colours) {
@@ -121,17 +162,77 @@
         function analyseHitObjects() {
             if (HitObjects) {
                 HitObjects = HitObjects[0].trim();
+                //4key일 경우 64 192 320 448
+                let temp = {};
+                HitObjects.split('\n').forEach((val, index) => {
+                    if (!temp[val.split(',')[0]])
+                        temp[val.split(',')[0]] = [];
+                    if (/[0-9]+:[0-9]+:[0-9]+:[0-9]+:[0-9]+:/.test(val.split(',')[5])) {
+                        //console.log('hold');
+                        temp[val.split(',')[0]].push([val.split(',')[2], val.split(',')[5].match(/[^:]+/)[0]]);
+                    }
+                    else {
+                        //console.log('normal');
+                        temp[val.split(',')[0]].push([val.split(',')[2], 0]);
+                        //console.log(val.split(',')[5].match(/[^:]+/)[0]);
+                    }
+                })
+                console.log(temp);
             }
+            else {
+                alertAndHistoryBack('hitObject가 없습니다.');
+            }
+        }
+        function setBackGround() {
+            //Background and Video events가 배열이라면 [0]은 배경, [1]은 영상이고, 배열이 아니라면 배경이다.
+            if (typeof (Events['Background and Video events']) == "string") {
+                $('#mainDiv').append(`<img src="/songs/${songName}/${Events['Background and Video events'].match(/(?<=")[^"]+/)[0]}" style="width: 100%;position: absolute;object-fit: cover;z-index:-1">`)
+            }
+            else {
+                $('#mainDiv').append(`<img src="/songs/${songName}/${Events['Background and Video events'][0].match(/(?<=")[^"]+/)[0]}" style="width: 100%;position: absolute;object-fit: cover;z-index:-1">`)
+            }
+        }
+
+        function initialize() {
+            height = can.clientHeight;
+            ctx.fillRect(0, 0, 400, height);
+            ctx.fillStyle = "white";
+            ctx.font = "60px Comic Arial";
+            ctx.fillText("press space", 10, 100);
+        }
+        function oneFrame() {
+            logic();
+            draw();
+        }
+        function logic() {
+            currentTime = new Date().getTime();
+        }
+        function draw() {
+            height = can.clientHeight;
+            drawBackGround();
+        }
+        function drawBackGround() {
+            const keyHeight = 150;
+            ctx.fillStyle = "black";
+            ctx.fillRect(0, 0, 400, height);
+            ctx.fillStyle = "#FF0000";
+            ctx.fillRect(0, 50, 100, 100);
+            ctx.fillRect(100, 90, 100, 100);
+            ctx.fillRect(0, height-keyHeight, 100, keyHeight);
         }
     </script>
 </head>
 
 <body>
-    <div>
-        <center>
-            <canvas class="border" id="can" width="800" height="600" tabindex='1'></canvas>
-        </center>
+    <div id="mainDiv" class="position-relative overflow-hidden" style="height:100vh">
+        <div class="position-absolute" style="top:0px;left:200px;height:100%;">
+        </div>
     </div>
+    <canvas class="border" id="can" style="width:400px;height:100%;" tabindex='1'></canvas>
+    <!--div class="image-container">
+        <img src="https://image-cdn.hypb.st/https%3A%2F%2Fkr.hypebeast.com%2Ffiles%2F2023%2F06%2Fchristopher-nolan-agrees-oppenheimer-is-a-horror-movie-ft.jpeg?fit=max&cbr=1&q=90&w=750&h=500" alt="Your Image">
+      </div-->
+
 </body>
 
 </html>

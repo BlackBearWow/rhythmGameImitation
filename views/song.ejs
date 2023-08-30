@@ -35,8 +35,9 @@
         const keyGapPixel = 2;
         const dfjkGap = { x: 30, y: 75 };
         let timePixelConst = 1.2;
-        const timeCutLine = 80;
+        const timeCutLine = 100;
         //
+        let score = 0;
         let combo = 0;
         let comboFontSize = 60;
         let hitStatus = ''; //miss hit
@@ -214,16 +215,33 @@
         function setBackGround() {
             //Background and Video events가 배열이라면 배경과 영상이 배열에 담겨있고, 배열이 아니라면 배경이다.
             if (typeof (Events['Background and Video events']) == "string") {
-                $('#mainDiv').append(`<img src="/songs/${songName}/${Events['Background and Video events'].match(/(?<=")[^"]+/)[0]}" style="width: 100%;position: absolute;object-fit: cover;z-index:-1">`)
+                //$('#mainDiv').append(`<img src="/songs/${songName}/${Events['Background and Video events'].match(/(?<=")[^"]+/)[0]}" style="width: 100%;position: absolute;object-fit: cover;z-index:-1">`)
             }
             else {
-                if(/[^,]+,[^,]+,[^,]+,[^,]+,[^,]+/.test(Events['Background and Video events'][0])) {
+                if (Events['Background and Video events'][1].startsWith("Video")) {
                     //0번째 index가 배경이미지일경우
-                    $('#mainDiv').append(`<img src="/songs/${songName}/${Events['Background and Video events'][0].match(/(?<=")[^"]+/)[0]}" style="width: 100%;position: absolute;object-fit: cover;z-index:-1">`)
+                    //$('#mainDiv').append(`<img src="/songs/${songName}/${Events['Background and Video events'][0].match(/(?<=")[^"]+/)[0]}" style="width: 100%;position: absolute;object-fit: cover;z-index:-1">`)
+                    //비티오 추가.
+                    const videoName = Events['Background and Video events'][1].match(/(?<=")[^"]+/)[0];
+                    const videoExtender = videoName.match(/(?<=\.).+/);
+                    if(videoExtender == "mp4" | videoExtender == "ogg" | videoExtender == "webm") {
+                        alert(`${videoExtender}는 동영상이 지원하는 확장자입니다`);
+                    }
+                    else {
+                        alert(`${videoExtender}는 지원하지 않는 확장자입니다.`)
+                    }
                 }
                 else {
                     //1번째 index가 배경이미지일경우
-                    $('#mainDiv').append(`<img src="/songs/${songName}/${Events['Background and Video events'][1].match(/(?<=")[^"]+/)[0]}" style="width: 100%;position: absolute;object-fit: cover;z-index:-1">`)
+                    //$('#mainDiv').append(`<img src="/songs/${songName}/${Events['Background and Video events'][1].match(/(?<=")[^"]+/)[0]}" style="width: 100%;position: absolute;object-fit: cover;z-index:-1">`)
+                    const videoName = Events['Background and Video events'][0].match(/(?<=")[^"]+/)[0];
+                    const videoExtender = videoName.match(/(?<=\.).+/);
+                    if(videoExtender == "mp4" | videoExtender == "ogg" | videoExtender == "webm") {
+                        alert(`${videoExtender}는 동영상이 지원하는 확장자입니다`);
+                    }
+                    else {
+                        alert(`${videoExtender}는 지원하지 않는 확장자입니다.`)
+                    }
                 }
             }
         }
@@ -255,7 +273,9 @@
                     if (keyBoard['d']['press']) {
                         const timeGap = parseInt(HitObjects[64][0][0]) - flowTime;
                         if (timeGap <= timeCutLine) {
-                            hitMiss('hit');
+                            if (Math.abs(timeGap) <= (timeCutLine / 3)) hitMiss(300);
+                            else if (Math.abs(timeGap) <= (timeCutLine * 2 / 3)) hitMiss(200);
+                            else hitMiss(100);
                             HitObjects[64].shift();
                         }
                         keyBoard['d']['press'] = false;
@@ -265,7 +285,9 @@
                     if (keyBoard['d']['press']) {
                         const timeGap = parseInt(HitObjects[64][0][0]) - flowTime;
                         if (timeGap <= timeCutLine) {
-                            hitMiss('hit');
+                            if (Math.abs(timeGap) <= (timeCutLine / 3)) hitMiss(300);
+                            else if (Math.abs(timeGap) <= (timeCutLine * 2 / 3)) hitMiss(200);
+                            else hitMiss(100);
                         }
                         keyBoard['d']['press'] = false;
                     }
@@ -273,7 +295,7 @@
                         const timeGap1 = parseInt(HitObjects[64][0][0]) - flowTime;
                         const timeGap2 = flowTime - parseInt(HitObjects[64][0][1]);
                         if ((timeGap1 <= timeCutLine) && (timeGap2 <= timeCutLine)) {
-                            hitMiss('hit');
+                            hitMiss(300);
                         }
                     }
                     else {
@@ -289,7 +311,9 @@
                     if (keyBoard['f']['press']) {
                         const timeGap = parseInt(HitObjects[192][0][0]) - flowTime;
                         if (timeGap <= timeCutLine) {
-                            hitMiss('hit');
+                            if (Math.abs(timeGap) <= (timeCutLine / 3)) hitMiss(300);
+                            else if (Math.abs(timeGap) <= (timeCutLine * 2 / 3)) hitMiss(200);
+                            else hitMiss(100);
                             HitObjects[192].shift();
                         }
                         keyBoard['f']['press'] = false;
@@ -299,7 +323,9 @@
                     if (keyBoard['f']['press']) {
                         const timeGap = parseInt(HitObjects[192][0][0]) - flowTime;
                         if (timeGap <= timeCutLine) {
-                            hitMiss('hit');
+                            if (Math.abs(timeGap) <= (timeCutLine / 3)) hitMiss(300);
+                            else if (Math.abs(timeGap) <= (timeCutLine * 2 / 3)) hitMiss(200);
+                            else hitMiss(100);
                         }
                         keyBoard['f']['press'] = false;
                     }
@@ -307,7 +333,7 @@
                         const timeGap1 = parseInt(HitObjects[192][0][0]) - flowTime;
                         const timeGap2 = flowTime - parseInt(HitObjects[192][0][1]);
                         if ((timeGap1 <= timeCutLine) && (timeGap2 <= timeCutLine)) {
-                            hitMiss('hit');
+                            hitMiss(300);
                         }
                     }
                     else {
@@ -323,7 +349,9 @@
                     if (keyBoard['j']['press']) {
                         const timeGap = parseInt(HitObjects[320][0][0]) - flowTime;
                         if (timeGap <= timeCutLine) {
-                            hitMiss('hit');
+                            if (Math.abs(timeGap) <= (timeCutLine / 3)) hitMiss(300);
+                            else if (Math.abs(timeGap) <= (timeCutLine * 2 / 3)) hitMiss(200);
+                            else hitMiss(100);
                             HitObjects[320].shift();
                         }
                         keyBoard['j']['press'] = false;
@@ -333,7 +361,9 @@
                     if (keyBoard['j']['press']) {
                         const timeGap = parseInt(HitObjects[320][0][0]) - flowTime;
                         if (timeGap <= timeCutLine) {
-                            hitMiss('hit');
+                            if (Math.abs(timeGap) <= (timeCutLine / 3)) hitMiss(300);
+                            else if (Math.abs(timeGap) <= (timeCutLine * 2 / 3)) hitMiss(200);
+                            else hitMiss(100);
                         }
                         keyBoard['j']['press'] = false;
                     }
@@ -341,7 +371,7 @@
                         const timeGap1 = parseInt(HitObjects[320][0][0]) - flowTime;
                         const timeGap2 = flowTime - parseInt(HitObjects[320][0][1]);
                         if ((timeGap1 <= timeCutLine) && (timeGap2 <= timeCutLine)) {
-                            hitMiss('hit');
+                            hitMiss(300);
                         }
                     }
                     else {
@@ -357,7 +387,9 @@
                     if (keyBoard['k']['press']) {
                         const timeGap = parseInt(HitObjects[448][0][0]) - flowTime;
                         if (timeGap <= timeCutLine) {
-                            hitMiss('hit');
+                            if (Math.abs(timeGap) <= (timeCutLine / 3)) hitMiss(300);
+                            else if (Math.abs(timeGap) <= (timeCutLine * 2 / 3)) hitMiss(200);
+                            else hitMiss(100);
                             HitObjects[448].shift();
                         }
                         keyBoard['k']['press'] = false;
@@ -367,7 +399,9 @@
                     if (keyBoard['k']['press']) {
                         const timeGap = parseInt(HitObjects[448][0][0]) - flowTime;
                         if (timeGap <= timeCutLine) {
-                            hitMiss('hit');
+                            if (Math.abs(timeGap) <= (timeCutLine / 3)) hitMiss(300);
+                            else if (Math.abs(timeGap) <= (timeCutLine * 2 / 3)) hitMiss(200);
+                            else hitMiss(100);
                         }
                         keyBoard['k']['press'] = false;
                     }
@@ -375,7 +409,7 @@
                         const timeGap1 = parseInt(HitObjects[448][0][0]) - flowTime;
                         const timeGap2 = flowTime - parseInt(HitObjects[448][0][1]);
                         if ((timeGap1 <= timeCutLine) && (timeGap2 <= timeCutLine)) {
-                            hitMiss('hit');
+                            hitMiss(300);
                         }
                     }
                     else {
@@ -486,11 +520,14 @@
         }
         function hitMiss(what) {
             comboFontSize = 60; hitFontSize = 60;
-            if (what == "hit") {
-                combo++; hitStatus = "hit";
-            }
-            else if (what == 'miss') {
+            if (what == 'miss') {
                 combo = 0; hitStatus = "miss";
+            }
+            else if (typeof what == 'number') {
+                //300 200 100점이 있다.
+                combo++; hitStatus = what;
+                score += combo * what;
+                $('#gameScore').text(`score:${score}`);
             }
         }
         function fontSizeCalculate() {
@@ -511,22 +548,22 @@
             ctx.fillStyle = "black";
             ctx.fillRect(0, 0, 400, height);
             //키 보이기
-            if(keyBoard['d']['pressing']) {
+            if (keyBoard['d']['pressing']) {
                 ctx.fillStyle = "#FF00FF";
             }
             else ctx.fillStyle = "#9400D3";
             ctx.fillRect(keyGapPixel, height - keyHeight, 100 - keyGapPixel, keyHeight);
-            if(keyBoard['f']['pressing']) {
+            if (keyBoard['f']['pressing']) {
                 ctx.fillStyle = "#FF00FF";
             }
             else ctx.fillStyle = "#9400D3";
             ctx.fillRect(keyGapPixel + 100, height - keyHeight, 100 - keyGapPixel, keyHeight);
-            if(keyBoard['j']['pressing']) {
+            if (keyBoard['j']['pressing']) {
                 ctx.fillStyle = "#FF00FF";
             }
             else ctx.fillStyle = "#9400D3";
             ctx.fillRect(keyGapPixel + 200, height - keyHeight, 100 - keyGapPixel, keyHeight);
-            if(keyBoard['k']['pressing']) {
+            if (keyBoard['k']['pressing']) {
                 ctx.fillStyle = "#FF00FF";
             }
             else ctx.fillStyle = "#9400D3";
@@ -623,23 +660,26 @@
             ctx.font = `${comboFontSize}px Comic Arial`;
             ctx.fillText(combo, 180, height - keyHeight - 500);
             ctx.font = `${hitFontSize}px Comic Arial`;
-            if (hitStatus == 'hit') ctx.fillStyle = "white";
-            else ctx.fillStyle = "red";
+            if (hitStatus == 'miss') ctx.fillStyle = "red";
+            else if (hitStatus == 300) ctx.fillStyle = "#8888ff";
+            else if (hitStatus == 200) ctx.fillStyle = "#6666ff";
+            else if (hitStatus == 100) ctx.fillStyle = "#4444ff";
             ctx.fillText(hitStatus, 180, height - keyHeight - 300);
+
         }
     </script>
 </head>
 
 <body>
     <div id="mainDiv" class="position-relative overflow-hidden" style="height:100vh">
+        <iframe id="youtube" width="100%" height="300" src="https://www.youtube.com/embed/F-bXO4irRWc?si=pFZyr9w__rpo93gD" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
         <div class="position-absolute" style="top:0px;left:200px;height:100%;">
             <canvas class="border" id="can" style="width:400px;height:100%;" width="400px" tabindex='1'></canvas>
         </div>
+        <div class="position-absolute" style="top:0px;left:600px;height:100%;">
+            <a id="gameScore" style="color:white;background-color:black;font-size: 40px;">score:0</a>
+        </div>
     </div>
-    <!--div class="image-container">
-        <img src="https://image-cdn.hypb.st/https%3A%2F%2Fkr.hypebeast.com%2Ffiles%2F2023%2F06%2Fchristopher-nolan-agrees-oppenheimer-is-a-horror-movie-ft.jpeg?fit=max&cbr=1&q=90&w=750&h=500" alt="Your Image">
-      </div-->
-
 </body>
 
 </html>

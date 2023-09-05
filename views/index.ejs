@@ -20,7 +20,7 @@
             <thead><th scope="col">#</th><th scope="col">제목</th></thead>
             <tbody>`;
                         dataList.forEach((val, index) => {
-                            temp += `<tr onclick="location.href=\`/song/${songName}/${val}\`;">
+                            temp += `<tr onclick="location.href=\`/playRhythmGame/${songName}/${val}\`;">
                         <th scope="row">${index}</th>
                         <td>${val}</td>
                     </tr>`;
@@ -45,10 +45,11 @@
         <div id="accordion">
             <% for(x in songList) { %>
                 <div class="card">
-                    <div class="card-header">
-                        <a class="btn" data-bs-toggle="collapse" href="#collapse<%=parseInt(x)+1%>"
-                            onclick="getSongData(`<%=songList[x]%>`, `<%=parseInt(x)+1%>`)">
-                            <%=songList[x]%>
+                    <div class="card-header p-0">
+                        <a class="btn p-0" data-bs-toggle="collapse" href="#collapse<%=parseInt(x)+1%>"
+                            onclick="getSongData(`<%=songList[x].name%>`, `<%=parseInt(x)+1%>`)">
+                            <img style="height:70px" src="/songs/<%=songList[x].name%>/<%=songList[x].bg%>">
+                            <%=songList[x].name%>
                         </a>
                     </div>
                     <div id="collapse<%=parseInt(x)+1%>" class="collapse" data-bs-parent="#accordion">

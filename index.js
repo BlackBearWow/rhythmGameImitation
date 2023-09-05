@@ -32,27 +32,35 @@ app.use('/songs', express.static('songs'));
 
 app.get('/', (req, res) => {
     //디렉토리를 읽은 후 리듬게임 리스트를 전송함.
-    const songList = fs.readdirSync('./songs');
-    //디렉토리만 전송한다.
-    res.render('index', { songList: songList.filter((val) => fs.statSync(`./songs/${val}`).isDirectory()) });
+    let songList = fs.readdirSync('./songs');
+    //디렉토리만 필터
+    songList = songList.filter((val) => fs.statSync(`./songs/${val}`).isDirectory());
+    songList.forEach((val, index) => {
+        songList[index] = { name: songList[index], bg: undefined };
+        if (fs.existsSync(`./songs/${val}/info.txt`)) {
+            let info = fs.readFileSync(`./songs/${val}/info.txt`, { encoding: 'utf8' });
+            songList[index].bg = JSON.parse(info).bg;
+        }
+    })
+    res.render('index', { songList });
 });
 
 app.get('/getSongListDataByName/:name', (req, res) => {
     const name = req.params.name;
     const songListData = fs.readdirSync(`./songs/${name}`);
-    //console.log(songListData.filter((val)=>val.endsWith('.osu')));
     res.send(songListData.filter((val) => val.endsWith('.osu')));
 });
 
-app.get('/song/:songName/:fileName', (req, res) => {
-    res.render('song');
+app.get('/playRhythmGame/:songName/:fileName', (req, res) => {
+    res.render('playRhythmGame');
 });
 
 app.get('/getFileData/:songName/:fileName', (req, res) => {
     const songName = req.params.songName;
     const fileName = req.params.fileName;
     const data = fs.readFileSync(`./songs/${songName}/${fileName}`, { encoding: 'utf8' });
-    res.send(data);
+    const youtubeId = JSON.parse(fs.readFileSync(`./songs/${songName}/info.txt`, { encoding: 'utf8' })).youtubeId;
+    res.send({data, youtubeId});
 });
 
 https.createServer(options, app).listen(10101, () => {

@@ -2,15 +2,16 @@
 const express = require('express');
 const session = require('express-session');
 const app = express();
-//const http = require('http');
-//const server = http.createServer(app);
-const https = require('https');
+const http = require('http');
+const server = http.createServer(app);
+//const https = require('https');
+//https.createServer(options, app)
 const fs = require('node:fs');
 
-const options = {
-    key: fs.readFileSync("./config/key.pem", 'utf-8'),
-    cert: fs.readFileSync("./config/cert.pem", 'utf-8'),
-}
+// const options = {
+//     key: fs.readFileSync("./config/key.pem", 'utf-8'),
+//     cert: fs.readFileSync("./config/cert.pem", 'utf-8'),
+// }
 
 app.use(session({
     secret: 'your-secret-key',
@@ -29,6 +30,7 @@ app.set('view engine', 'ejs');
 
 // Function to serve static files
 app.use('/songs', express.static('songs'));
+app.use('/hitNormal', express.static('hitNormal'));
 
 app.get('/', (req, res) => {
     //디렉토리를 읽은 후 리듬게임 리스트를 전송함.
@@ -63,6 +65,6 @@ app.get('/getFileData/:songName/:fileName', (req, res) => {
     res.send({data, youtubeId});
 });
 
-https.createServer(options, app).listen(10101, () => {
+server.listen(10101, () => {
     console.log('listening on *:10101');
 });

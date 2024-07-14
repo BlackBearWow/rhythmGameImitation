@@ -1,6 +1,6 @@
 # rhythmGameImitation
 
-순서 
+초기
 
 - [x] index페이지에 리듬게임 리스트 보여주기
 - [x] 리듬게임 리스트를 클릭하면 해당 리듬게임 페이지로 이동
@@ -19,3 +19,7 @@
     - https://stackoverflow.com/questions/51424578/embed-youtube-code-is-not-working-in-html 애초에 위는 오류가 아니었다. 그냥 도메인이 없는곳에서 동영상을 제한한것.
 - [x] 누를 때 효과 나오게
 - [x] hit miss일 때 효과음
+
+발전
+
+- [] 파일 포멧과 저장 방식 고려 후 결정

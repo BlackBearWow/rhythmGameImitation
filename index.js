@@ -4,14 +4,7 @@ const session = require('express-session');
 const app = express();
 const http = require('http');
 const server = http.createServer(app);
-//const https = require('https');
-//https.createServer(options, app)
 const fs = require('node:fs');
-
-// const options = {
-//     key: fs.readFileSync("./config/key.pem", 'utf-8'),
-//     cert: fs.readFileSync("./config/cert.pem", 'utf-8'),
-// }
 
 app.use(session({
     secret: 'your-secret-key',

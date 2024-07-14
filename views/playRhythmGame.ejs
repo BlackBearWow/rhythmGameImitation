@@ -13,7 +13,6 @@
         let songName, fileName;
         let can;        //canvas 객체
         let ctx;        //context객체를 얻어야 drawimage와 filltext를 할 수 있음
-        let mainInterval;   //interval변수
         let keyBoard = {
             'a': { pressing: false, press: false }, 's': { pressing: false, press: false },
             'd': { pressing: false, press: false }, 'f': { pressing: false, press: false },
@@ -118,26 +117,27 @@
             })
         }
         function onPlayerReady() {
-            $("#can").keydown(function (e) {
-                if (e.key == "Enter") {
-                    if (!mainInterval) {
-                        startTime = new Date().getTime();
-                        startTime += parseInt(General['AudioLeadIn']);
-                        setTimeout(() => {
-                            if (youtubeVideoId) {
-                                player.playVideo();
-                                player.mute();
-                            }
-                            bgm.play();
-                            bgm.onended = function () {
-                                alertAndHistoryBack('노래가 끝났습니다');
-                            }
-                        }, parseInt(General['AudioLeadIn']));
-                        //General['AudioLeadIn']은 전체적인 시작 자체를 늦추는 것이다. 오디오만의 싱크를 위한 것이 아님.
-                        mainInterval = setInterval(oneFrame, 10);
+            $("#can").focus();
+            $("#can").on("keydown", startRhythmGame);
+        }
+        function startRhythmGame(e) {
+            if (e.key == "j") {
+                startTime = new Date().getTime();
+                startTime += parseInt(General['AudioLeadIn']);
+                setTimeout(() => {
+                    if (youtubeVideoId) {
+                        player.playVideo();
+                        player.mute();
                     }
-                }
-            })
+                    bgm.play();
+                    bgm.onended = function () {
+                        alertAndHistoryBack('노래가 끝났습니다');
+                    }
+                }, parseInt(General['AudioLeadIn']));
+                //General['AudioLeadIn']은 전체적인 시작 자체를 늦추는 것이다. 오디오만의 싱크를 위한 것이 아님.
+                $("#can").off("keydown", startRhythmGame);
+                requestAnimationFrame(oneFrame);
+            }
         }
 
         function alertAndHistoryBack(msg) {
@@ -224,7 +224,7 @@
                 Difficulty = temp;
                 //CircleSize:4는 4key를 의미한다.
                 keySize = Difficulty.CircleSize;
-                if(!((keySize == 4)||(keySize == 5)||(keySize == 6)||(keySize == 7)||(keySize == 8))) {
+                if (!((keySize == 4) || (keySize == 5) || (keySize == 6) || (keySize == 7) || (keySize == 8))) {
                     alertAndHistoryBack('4 5 6 7 8키만 지원합니다');
                 }
                 hitRadius = new Array(parseInt(keySize)).fill(0);
@@ -348,12 +348,13 @@
             ctx.fillRect(0, 0, width, height);
             ctx.fillStyle = "white";
             ctx.font = "70px Comic Arial";
-            ctx.fillText("click and", 40, 300);
-            ctx.fillText("press Enter", 40, 400);
+            ctx.fillText("press", 40, 300);
+            ctx.fillText("  J  ", 40, 400);
         }
         function oneFrame() {
             logic();
             draw();
+            requestAnimationFrame(oneFrame);
         }
         function logic() {
             currentTime = new Date().getTime();
@@ -630,11 +631,11 @@
             for (let i = 0; i < keySize; i++) {
                 if (hitRadius[i] != 0) {
                     ctx.beginPath();
-                    ctx.arc(oneWidth * (i+0.5) , height - keyHeight - 5, hitRadius[i] + 10, 0, 2 * Math.PI);
-                    ctx.fillStyle = `rgb(${100+Math.floor(Math.random()*156)},${100+Math.floor(Math.random()*156)},${100+Math.floor(Math.random()*156)})`;
+                    ctx.arc(oneWidth * (i + 0.5), height - keyHeight - 5, hitRadius[i] + 10, 0, 2 * Math.PI);
+                    ctx.fillStyle = `rgb(${100 + Math.floor(Math.random() * 156)},${100 + Math.floor(Math.random() * 156)},${100 + Math.floor(Math.random() * 156)})`;
                     ctx.fill();
                     ctx.beginPath();
-                    ctx.arc(oneWidth * (i+0.5) , height - keyHeight - 5, hitRadius[i], 0, 2 * Math.PI);
+                    ctx.arc(oneWidth * (i + 0.5), height - keyHeight - 5, hitRadius[i], 0, 2 * Math.PI);
                     ctx.fillStyle = "orange";
                     ctx.fill();
                 }
@@ -646,7 +647,7 @@
 <body>
     <div id="mainDiv" class="position-relative overflow-hidden" style="height:100vh">
         <div id="youtubePlayer"></div>
-        <div class="position-absolute" style="top:0px;left:200px;height:100%;">
+        <div class="position-absolute" style="top:0px;left:200px;height:100%;opacity: 0.5;">
             <canvas class="border" id="can" style="height:100%;" width="400px" tabindex='1'></canvas>
         </div>
         <div class="position-absolute" style="top:0px;left:600px;height:100%;" id="gameScoreDiv">

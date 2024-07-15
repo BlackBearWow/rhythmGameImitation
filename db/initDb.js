@@ -1,34 +1,32 @@
-const mysql = require("mysql2");
+const DB = require("./DB");
 
-// rhythm DB가 없을수도 있으므로 mysqldb에 접속
-const connection = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: 'onlyroot',
-    database: 'mysql'
-});
-connection.addListener('error', (err)=>console.log(err));
+// rhythm DB가 있는지 확인. 없다면 생성
+DB.query('CREATE DATABASE IF NOT EXISTS rhythm DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;', false);
 
-// rhythm DB가 있는지 확인하는 과정.
-connection.query(
-    'CREATE DATABASE IF NOT EXISTS rhythm;',
-    function(err, result, fields) {
-        console.log(result);
-    }
-);
+// rhythm DB로 사용 변경
+DB.useRhythmDB();
 
-connection.query(
-    'use rhythm;',
-    function(err, result, fields) {
-        console.log(result);
-    }
-);
+// songs table이 있는지 확인. 없다면 생성
+DB.query(
+'CREATE TABLE IF NOT EXISTS songs ( '
+    +'id INT NOT NULL AUTO_INCREMENT, '
+    +'songName VARCHAR(100) NOT NULL, '
+    +'PRIMARY KEY(id)'
++');'
+, false);
 
-connection.query(
-    'show tables;',
-    function(err, result, fields) {
-        console.log(result);
-    }
-);
-// query를 할 db를 만들자. query(sql, resultShowFlag)으로.
-connection.end();
+// bitmap table이 있는지 확인. 없다면 생성
+DB.query(
+'CREATE TABLE IF NOT EXISTS bitmap ( '
+    +'id INT NOT NULL AUTO_INCREMENT, '
+    +'songId INT NOT NULL, '
+    +'bitmapName VARCHAR(100) NOT NULL, '
+    +'bitmapStar VARCHAR(100) NOT NULL, '
+    +'PRIMARY KEY(id)'
++');'
+, false);
+
+// 디렉토리를 읽은 후 table에 정보 추가 해야됨.
+
+DB.end();
+console.log("initDB end");

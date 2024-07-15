@@ -20,9 +20,12 @@
 - [x] 누를 때 효과 나오게
 - [x] hit miss일 때 효과음
 
-발전
+발전과제
 
-- [] 파일 포멧과 저장 방식 고려 후 결정
+- [] 곡 제목들, 곡마다 비트맵 제목은 영구저장, 비트맵 정보는 휘발성 storage로 저장
+- [] db에 rhytm DB, song table - songName id bitmapId, bitmap table - id bitmapName bitmapStar만들기
 - [] 로그인
 - [] 노트 업로드
 - [] 노트 만들기
+- [] 곡 선택 창에서 백그라운드 뮤직 나오게
+- [] 곡 선택 창에서 유튜브 영상 보이게

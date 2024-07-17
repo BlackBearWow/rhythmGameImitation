@@ -36,24 +36,11 @@
             }
             //이미 해당 곡의 리스트가 있다면 가져오지 않는다.
         }
-        function getAllSongs() {
-            $.ajax({
-                url: `getAllSongs`,
-                type: `get`,
-                success: function (data) {
-                    console.log(data);
-                },
-                error: function (error) {
-                    console.error(error);
-                }
-            })
-        }
     </script>
 </head>
 
 <body>
     <div class="container mt-2">
-        <button onclick="getAllSongs()">전체 곡 갱신하기</button>
         <h2>곡 리스트</h2>
         <div id="accordion">
             <% for(x in songList) { %>

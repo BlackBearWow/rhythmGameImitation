@@ -5,7 +5,9 @@ const app = express();
 const http = require('http');
 const server = http.createServer(app);
 const fs = require('node:fs');
+const DB = require("./db/DB");
 
+DB.useRhythmDB();
 app.use(session({
     secret: 'your-secret-key',
     resave: false,
@@ -24,6 +26,12 @@ app.set('view engine', 'ejs');
 // Function to serve static files
 app.use('/songs', express.static('songs'));
 app.use('/hitNormal', express.static('hitNormal'));
+
+app.get('/getAllSongs', async(req, res)=>{
+    let [songs] = await DB.queryPromise(`select * from songs;`);
+    let [bitmap] = await DB.queryPromise(`select * from bitmap;`);
+    res.send({songs, bitmap});
+});
 
 app.get('/', (req, res) => {
     //디렉토리를 읽은 후 리듬게임 리스트를 전송함.

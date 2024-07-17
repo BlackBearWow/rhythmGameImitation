@@ -9,6 +9,9 @@ const connection = mysql.createConnection({
 });
 connection.addListener('error', (err)=>console.log(err));
 
+function queryPromise(sql='show tables;') {
+    return connection.promise().query(sql);
+}
 function query(sql='show tables;', resultShowFlag=true){
     connection.query(
         sql,
@@ -22,10 +25,11 @@ function query(sql='show tables;', resultShowFlag=true){
     );
 }
 function useRhythmDB() {
-    query('use rhythm;', false);
+    return queryPromise('use rhythm;');
 }
 function end() {
     connection.end();
+    console.log(`db connection end`);
 }
 
-module.exports = {query, useRhythmDB, end};
+module.exports = {queryPromise, query, useRhythmDB, end};

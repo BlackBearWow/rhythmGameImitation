@@ -23,7 +23,8 @@
 발전과제
 
 - [] 곡 제목들, 곡마다 비트맵 제목은 영구저장, 비트맵 정보는 휘발성 storage로 저장
-- [] db에 rhytm DB, song table - songName id bitmapId, bitmap table - id bitmapName bitmapStar만들기
+- [x] db에 rhythm DB, songs table - songName id, bitmap table - id songId bitmapName bitmapStar 만들기
+    - [] 디렉토리 읽어서 table에 정보 입력.
 - [] 로그인
 - [] 노트 업로드
 - [] 노트 만들기

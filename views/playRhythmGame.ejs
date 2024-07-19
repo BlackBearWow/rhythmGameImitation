@@ -50,7 +50,7 @@
         const keyHeight = 100;
         const keyGapPixel = 2;
         const dfjkGap = { x: 30, y: 75 };
-        let timePixelConst = 1.2;
+        let noteSpeed = 1;
         const timeCutLine = 100;
         // 점수 콤보
         let score = 0;
@@ -112,6 +112,13 @@
                             keyBoard[e.key]['pressing'] = false;
                         }
                     });
+                    // 노트 속도와 canvas투명도 설정 하기
+                    if(localStorage.getItem("noteSpeed")!=null) {
+                        noteSpeed = Number(localStorage.getItem("noteSpeed"));
+                    }
+                    if(localStorage.getItem("canvasOpacity")!=null) {
+                        $("#can").css("opacity", Number(localStorage.getItem("canvasOpacity")));
+                    }
                     resolve();
                 })
             })
@@ -603,7 +610,7 @@
                     if (HitObjects[k][i][1] == 0) { //단일 노트라면
                         const timeGap = parseInt(HitObjects[k][i][0]) - flowTime;
                         if (timeGap >= 1000) break;
-                        ctx.fillRect(oneWidth * k, height - keyHeight - timeGap * timePixelConst, oneWidth, 10);
+                        ctx.fillRect(oneWidth * k, height - keyHeight - timeGap * noteSpeed, oneWidth, 10);
                     }
                     else {  //hold 노트라면
                         //현재 지난 시간과 hold노트의 시작시간의 차이다. 1초 이상 차이난다면 break;
@@ -611,8 +618,8 @@
                         //tineGap2는 hold노트의 끝나는시간과 현재 지난 시간의 차이다. fillRect의 출발 지점을 알아내기 위해 필요
                         const timeGap2 = parseInt(HitObjects[k][i][1]) - flowTime;
                         //noteHeight는 hold노트의 길이이다.
-                        const noteHeight = (HitObjects[k][i][1] - HitObjects[k][i][0]) * timePixelConst;
-                        ctx.fillRect(oneWidth * k, height - keyHeight - timeGap2 * timePixelConst, oneWidth, noteHeight + 10);
+                        const noteHeight = (HitObjects[k][i][1] - HitObjects[k][i][0]) * noteSpeed;
+                        ctx.fillRect(oneWidth * k, height - keyHeight - timeGap2 * noteSpeed, oneWidth, noteHeight + 10);
                     }
                 }
             }
@@ -647,8 +654,8 @@
 <body>
     <div id="mainDiv" class="position-relative overflow-hidden" style="height:100vh">
         <div id="youtubePlayer"></div>
-        <div class="position-absolute" style="top:0px;left:200px;height:100%;opacity: 0.5;">
-            <canvas class="border" id="can" style="height:100%;" width="400px" tabindex='1'></canvas>
+        <div class="position-absolute" style="top:0px;left:200px;height:100%;">
+            <canvas class="border" id="can" style="height:100%;opacity:0.5;" width="400px" tabindex='1'></canvas>
         </div>
         <div class="position-absolute" style="top:0px;left:600px;height:100%;" id="gameScoreDiv">
             <a id="gameScore" style="color:white;background-color:black;font-size: 40px;">score:0</a>

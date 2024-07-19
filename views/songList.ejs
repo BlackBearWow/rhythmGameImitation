@@ -2,7 +2,7 @@
 <html lang="en" data-bs-theme="light">
 
 <head>
-    <title>rhythm game</title>
+    <title>rhythm game songList</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -36,11 +36,25 @@
             }
             //이미 해당 곡의 리스트가 있다면 가져오지 않는다.
         }
+        function getAllSongs() {
+            $.ajax({
+                url: `getAllSongs`,
+                type: `get`,
+                success: function (data) {
+                    // localStorage나 indexedDB에 저장해야됨.
+                    console.log(data);
+                },
+                error: function (error) {
+                    console.error(error);
+                }
+            })
+        }
     </script>
 </head>
 
 <body>
     <div class="container mt-2">
+        <button onclick="getAllSongs()">전체 곡 갱신하기</button>
         <h2>곡 리스트</h2>
         <div id="accordion">
             <% for(x in songList) { %>

@@ -34,6 +34,14 @@ app.get('/getAllSongs', async(req, res)=>{
 });
 
 app.get('/', (req, res) => {
+    res.render('index');
+});
+
+app.get('/configuration', (req, res) => {
+    res.render('configuration');
+});
+
+app.get('/songList', (req, res) => {
     //디렉토리를 읽은 후 리듬게임 리스트를 전송함.
     let songList = fs.readdirSync('./songs');
     //디렉토리만 필터
@@ -45,7 +53,7 @@ app.get('/', (req, res) => {
             songList[index].bg = JSON.parse(info).bg;
         }
     })
-    res.render('index', { songList });
+    res.render('songList', { songList });
 });
 
 app.get('/getSongListDataByName/:name', (req, res) => {

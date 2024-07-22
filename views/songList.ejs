@@ -43,11 +43,47 @@
                 success: function (data) {
                     // localStorage나 indexedDB에 저장해야됨.
                     console.log(data);
+                    saveToDB(data);
                 },
                 error: function (error) {
                     console.error(error);
                 }
             })
+        }
+        function saveToDB(data) {
+            const request = indexedDB.open("rhythm");
+            let db;
+            request.onerror = (event) => {
+                console.error(`Database error: ${event.target.errorCode}`);
+            }
+            request.onupgradeneeded = (event) => {
+                db = event.target.result;
+                const songObjectStore = db.createObjectStore("songs", { keyPath: "id" });
+                songObjectStore.createIndex("songName", "songName", { unique: true });
+                const bitmapObjectStore = db.createObjectStore("bitmap", { keyPath: "id" });
+                bitmapObjectStore.createIndex("bitmapName", "bitmapName", { unique: true });
+            }
+            request.onsuccess = (event) => {
+                db = event.target.result;
+                const transaction = db.transaction(["songs", "bitmap"], "readwrite");
+                const songObjectStore = transaction.objectStore("songs");
+                songObjectStore.clear();
+                data.songs.forEach((song)=>{
+                    const request = songObjectStore.add(song);
+                    request.onerror = (event) => {
+                        console.log(`song 데이터 넣기 에러`);
+                        console.log(event);
+                    }
+                })
+                const bitmapObjectStore = transaction.objectStore("bitmap");
+                bitmapObjectStore.clear();
+                data.bitmap.forEach((val)=>{
+                    const request = bitmapObjectStore.add(val);
+                    request.onerror = (event) => {
+                        console.log(`bitmap 데이터 넣기 에러`);
+                    }
+                })
+            };
         }
     </script>
 </head>

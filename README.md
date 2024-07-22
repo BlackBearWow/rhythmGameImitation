@@ -24,7 +24,7 @@
 
 - [] 곡 제목들, 곡마다 비트맵 제목은 영구저장, 비트맵 정보는 휘발성 storage로 저장
 - [x] db에 rhythm DB, songs table, bitmap table 만들기
-- [] 모든 곡 갱신 버튼 기능. localStorage나 indexedDB에 저장 해야 함.
+- [x] 모든 곡 갱신 버튼 기능. songs와 bitmap을 indexedDB에 넣기
 - [] index페이지에 리듬게임 리스트 보여주기
 - [] 로그인
 - [] 노트 업로드

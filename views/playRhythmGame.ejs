@@ -605,16 +605,17 @@
             //노트들의 시간은 어떻게 할까?
             //노트의 시간과 현재 시간이 1초 사이라면 보여줘보자.
             ctx.fillStyle = "#AFEEEE";
+            const showHeight = can.clientHeight / noteSpeed;
             for (let k = 0; k < keySize; k++) {
                 for (let i = 0; i < HitObjects[k].length; i++) {
                     if (HitObjects[k][i][1] == 0) { //단일 노트라면
                         const timeGap = parseInt(HitObjects[k][i][0]) - flowTime;
-                        if (timeGap >= 1000) break;
+                        if (timeGap >= showHeight) break;
                         ctx.fillRect(oneWidth * k, height - keyHeight - timeGap * noteSpeed, oneWidth, 10);
                     }
                     else {  //hold 노트라면
                         //현재 지난 시간과 hold노트의 시작시간의 차이다. 1초 이상 차이난다면 break;
-                        if ((parseInt(HitObjects[k][i][0]) - flowTime) >= 1000) break;
+                        if ((parseInt(HitObjects[k][i][0]) - flowTime) >= showHeight) break;
                         //tineGap2는 hold노트의 끝나는시간과 현재 지난 시간의 차이다. fillRect의 출발 지점을 알아내기 위해 필요
                         const timeGap2 = parseInt(HitObjects[k][i][1]) - flowTime;
                         //noteHeight는 hold노트의 길이이다.

@@ -9,39 +9,14 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script>
-        function getSongData(songName, num) {
-            if ($(`#songData${num}`).html().length == 0) {
-                //새로 정보 가져오기
-                $.ajax({
-                    url: `/getSongListDataByName/${songName}`,
-                    type: "get",
-                    success: function (dataList) {
-                        let temp = `<table class="table table-bordered table-striped-columns">
-            <thead><th scope="col">#</th><th scope="col">제목</th></thead>
-            <tbody>`;
-                        dataList.forEach((val, index) => {
-                            temp += `<tr onclick="location.href=\`/playRhythmGame/${songName}/${val}\`;">
-                        <th scope="row">${index}</th>
-                        <td>${val}</td>
-                    </tr>`;
-                        });
-                        temp += `</tbody></table>`;
-                        $(`#songData${num}`).html(temp);
-                        console.log(dataList);
-                    },
-                    error: function (error) {
-                        console.log(error);
-                    }
-                });
-            }
-            //이미 해당 곡의 리스트가 있다면 가져오지 않는다.
-        }
+        let songs;
+        let bitmap;
         function getAllSongs() {
             $.ajax({
                 url: `getAllSongs`,
                 type: `get`,
                 success: function (data) {
-                    // localStorage나 indexedDB에 저장해야됨.
+                    // indexedDB에 저장함.
                     console.log(data);
                     saveToDB(data);
                 },
@@ -72,7 +47,6 @@
                     const request = songObjectStore.add(song);
                     request.onerror = (event) => {
                         console.log(`song 데이터 넣기 에러`);
-                        console.log(event);
                     }
                 })
                 const bitmapObjectStore = transaction.objectStore("bitmap");
@@ -83,8 +57,69 @@
                         console.log(`bitmap 데이터 넣기 에러`);
                     }
                 })
+                showLists();
             };
         }
+        function showLists() {
+            const request = indexedDB.open("rhythm");
+            let db;
+            request.onerror = (event) => {
+                console.error(`Database error: ${event.target.errorCode}`);
+            }
+            request.onupgradeneeded = (event) => {
+                db = event.target.result;
+                const songObjectStore = db.createObjectStore("songs", { keyPath: "id" });
+                songObjectStore.createIndex("songName", "songName", { unique: true });
+                const bitmapObjectStore = db.createObjectStore("bitmap", { keyPath: "id" });
+                bitmapObjectStore.createIndex("bitmapName", "bitmapName", { unique: true });
+            }
+            request.onsuccess = (event) => {
+                db = event.target.result;
+                const transaction = db.transaction(["songs", "bitmap"], "readwrite");
+                const songObjectStore = transaction.objectStore("songs");
+                const bitmapObjectStore = transaction.objectStore("bitmap");
+                songs = songObjectStore.getAll();
+                songs.onsuccess = (event) => {
+                    if(event.target.result.length == 0){
+                        alert("데이터가 없습니다. 곡 갱신하기 버튼을 눌러주세요");
+                        return;
+                    }
+                    $("#accordion").empty();
+                    event.target.result.forEach((val, idx)=>{
+                        $("#accordion").append(`<div class="card">
+                            <div class="card-header p-0">
+                                <a class="btn p-0" data-bs-toggle="collapse" href="#collapse${val.id}">
+                                <img style="height:70px" src="/songs/${val.songName}/${val.bg}">
+                                ${val.songName}
+                                [${val.duration}초]
+                                </a>
+                            </div>
+                            <div id="collapse${val.id}" class="collapse" data-bs-parent="#accordion">
+                                <div class="card-body">
+                                    <table class="table table-bordered table-striped-columns">
+                                        <thead>
+                                            <th scope="col">레벨</th><th scope="col">제목</th>
+                                        </thead>
+                                        <tbody id="songData${val.id}">
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>`);
+                    })
+                }
+                bitmap = bitmapObjectStore.getAll();
+                bitmap.onsuccess = (event) => {
+                    event.target.result.forEach((val, idx)=>{
+                        $(`#songData${val.songId}`).append(`<tr onclick="location.href=\`/playRhythmGame/${val.songId}/${val.id}\`;">
+                            <th scope="row">${val.level}</th>
+                            <td>${val.bitmapName}</td>
+                        </tr>`);
+                    })
+                }
+            };
+        }
+        showLists();
     </script>
 </head>
 
@@ -93,20 +128,6 @@
         <button onclick="getAllSongs()">전체 곡 갱신하기</button>
         <h2>곡 리스트</h2>
         <div id="accordion">
-            <% for(x in songList) { %>
-                <div class="card">
-                    <div class="card-header p-0">
-                        <a class="btn p-0" data-bs-toggle="collapse" href="#collapse<%=parseInt(x)+1%>"
-                            onclick="getSongData(`<%=songList[x].name%>`, `<%=parseInt(x)+1%>`)">
-                            <img style="height:70px" src="/songs/<%=songList[x].name%>/<%=songList[x].bg%>">
-                            <%=songList[x].name%>
-                        </a>
-                    </div>
-                    <div id="collapse<%=parseInt(x)+1%>" class="collapse" data-bs-parent="#accordion">
-                        <div class="card-body" id="songData<%=parseInt(x)+1%>"></div>
-                    </div>
-                </div>
-                <% } %>
         </div>
     </div>
 </body>

@@ -69,7 +69,7 @@
         let youtubeVideoId;
         async function onYouTubeIframeAPIReady() {
             await waitForDocumentReady();
-            if (youtubeVideoId != "") {
+            if (youtubeVideoId) {
                 player = new YT.Player('youtubePlayer', {
                     height: '100%',
                     width: '100%',
@@ -113,10 +113,10 @@
                         }
                     });
                     // 노트 속도와 canvas투명도 설정 하기
-                    if(localStorage.getItem("noteSpeed")!=null) {
+                    if (localStorage.getItem("noteSpeed") != null) {
                         noteSpeed = Number(localStorage.getItem("noteSpeed"));
                     }
-                    if(localStorage.getItem("canvasOpacity")!=null) {
+                    if (localStorage.getItem("canvasOpacity") != null) {
                         $("#can").css("opacity", Number(localStorage.getItem("canvasOpacity")));
                     }
                     resolve();
@@ -152,22 +152,67 @@
             history.go(-1);
         }
         function getFileData() {
-            songName = window.location.pathname.split('/')[2];
-            fileName = window.location.pathname.split('/')[3];
-            $.ajax({
-                url: `/getFileData/${songName}/${fileName}`,
-                type: "get",
-                async: false,
-                success: function ({ data, youtubeId }) {
-                    youtubeVideoId = youtubeId;
-                    console.log(`id: ${youtubeId}`);
-                    analyseFileData(data);
-                    initialize();
-                },
-                error: function (error) {
-                    console.log(error);
+            const songId = window.location.pathname.split('/')[2];
+            const bitmapId = window.location.pathname.split('/')[3];
+            //songId와 id에 해당하는 비트맵 노트정보가 있는지 확인. 없다면 서버에서 요청해서 받아온다.
+            const request = indexedDB.open("rhythm");
+            let db;
+            request.onerror = (event) => {
+                console.error(`Database error: ${event.target.errorCode}`);
+            }
+            request.onupgradeneeded = (event) => {
+                db = event.target.result;
+                const songObjectStore = db.createObjectStore("songs", { keyPath: "id" });
+                songObjectStore.createIndex("songName", "songName", { unique: true });
+                const bitmapObjectStore = db.createObjectStore("bitmap", { keyPath: "id" });
+                bitmapObjectStore.createIndex("bitmapName", "bitmapName", { unique: true });
+                const noteInfoObjectStore = db.createObjectStore("noteInfo", { keyPath: "path" });
+            }
+            request.onsuccess = (event) => {
+                db = event.target.result;
+                const transaction = db.transaction(["songs", "bitmap", "noteInfo"], "readwrite");
+                const songObjectStore = transaction.objectStore("songs");
+                const bitmapObjectStore = transaction.objectStore("bitmap");
+                const noteInfoObjectStore = transaction.objectStore("noteInfo");
+                const song = songObjectStore.get(Number(songId));
+                song.onsuccess = (event) => {
+                    if (event.target.result.length == 0) {
+                        alert("songs 데이터가 없습니다. 곡 갱신하기 버튼을 눌러주세요");
+                        location.href = "/songList";
+                        return;
+                    }
+                    songName = event.target.result.songName;
+                    youtubeVideoId = event.target.result.youtubeId;
+                    const bitmap = bitmapObjectStore.get(Number(bitmapId));
+                    bitmap.onsuccess = (event) => {
+                        fileName = event.target.result.bitmapName;
+                        const noteInfo = noteInfoObjectStore.get(`${songName}/${fileName}`);
+                        noteInfo.onsuccess = (event) => {
+                            //noteInfo에 해당 데이터가 없으면 서버에서 요청하고 data를 noteInfo에 추가.
+                            if (event.target.result == undefined) {
+                                $.ajax({
+                                    url: `/getFileData/${songName}/${fileName}`,
+                                    type: "get",
+                                    async: false,
+                                    success: function ({ data }) {
+                                        noteInfoObjectStore.add({path:`${songName}/${fileName}`, data});
+                                        analyseFileData(data);
+                                        initialize();
+                                    },
+                                    error: function (error) {
+                                        console.log(error);
+                                    }
+                                });
+                            }
+                            //noteInfo에 데이터가 있으면 서버에 요청하지 않음.
+                            else {
+                                analyseFileData(event.target.result.data);
+                                initialize();
+                            }
+                        }
+                    }
                 }
-            });
+            };
         }
         function analyseFileData(data) {
             General = data.match(/(?<=\[General\])([\s\S]*?)(?=\[Editor\]|\[Metadata\]|\[Difficulty\]|\[Events\]|\[TimingPoints\]|\[Colours\]|\[HitObjects\])/);
@@ -656,7 +701,7 @@
     <div id="mainDiv" class="position-relative overflow-hidden" style="height:100vh">
         <div id="youtubePlayer"></div>
         <div class="position-absolute" style="top:0px;left:200px;height:100%;">
-            <canvas class="border" id="can" style="height:100%;opacity:0.5;" width="400px" tabindex='1'></canvas>
+            <canvas class="border" id="can" style="height:100%;opacity:1;" width="400px" tabindex='1'></canvas>
         </div>
         <div class="position-absolute" style="top:0px;left:600px;height:100%;" id="gameScoreDiv">
             <a id="gameScore" style="color:white;background-color:black;font-size: 40px;">score:0</a>

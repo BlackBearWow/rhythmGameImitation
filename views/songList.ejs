@@ -37,6 +37,7 @@
                 songObjectStore.createIndex("songName", "songName", { unique: true });
                 const bitmapObjectStore = db.createObjectStore("bitmap", { keyPath: "id" });
                 bitmapObjectStore.createIndex("bitmapName", "bitmapName", { unique: true });
+                const noteInfoObjectStore = db.createObjectStore("noteInfo", { keyPath: "path" });
             }
             request.onsuccess = (event) => {
                 db = event.target.result;
@@ -57,6 +58,7 @@
                         console.log(`bitmap 데이터 넣기 에러`);
                     }
                 })
+                alert("전체 곡 가져오기 / 최신화를 하였습니다");
                 showLists();
             };
         }
@@ -72,16 +74,17 @@
                 songObjectStore.createIndex("songName", "songName", { unique: true });
                 const bitmapObjectStore = db.createObjectStore("bitmap", { keyPath: "id" });
                 bitmapObjectStore.createIndex("bitmapName", "bitmapName", { unique: true });
+                const noteInfoObjectStore = db.createObjectStore("noteInfo", { keyPath: "path" });
             }
             request.onsuccess = (event) => {
                 db = event.target.result;
-                const transaction = db.transaction(["songs", "bitmap"], "readwrite");
+                const transaction = db.transaction(["songs", "bitmap"], "readonly");
                 const songObjectStore = transaction.objectStore("songs");
                 const bitmapObjectStore = transaction.objectStore("bitmap");
                 songs = songObjectStore.getAll();
                 songs.onsuccess = (event) => {
                     if(event.target.result.length == 0){
-                        alert("데이터가 없습니다. 곡 갱신하기 버튼을 눌러주세요");
+                        alert("songs 데이터가 없습니다. 곡 갱신하기 버튼을 눌러주세요");
                         return;
                     }
                     $("#accordion").empty();
@@ -125,8 +128,9 @@
 
 <body>
     <div class="container mt-2">
-        <button onclick="getAllSongs()">전체 곡 갱신하기</button>
-        <h2>곡 리스트</h2>
+        <button type="button" class="btn btn btn-primary" onclick="location.href='/'">홈으로</button>
+        <button type="button" class="btn btn btn-primary" onclick="getAllSongs()">전체 곡 가져오기 / 최신화</button>
+        <h1>곡 리스트</h1>
         <div id="accordion">
         </div>
     </div>

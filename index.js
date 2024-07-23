@@ -62,7 +62,7 @@ app.get('/getSongListDataByName/:name', (req, res) => {
     res.send(songListData.filter((val) => val.endsWith('.osu')));
 });
 
-app.get('/playRhythmGame/:songName/:fileName', (req, res) => {
+app.get('/playRhythmGame/:songId/:bitmapId', (req, res) => {
     res.render('playRhythmGame');
 });
 
@@ -70,8 +70,7 @@ app.get('/getFileData/:songName/:fileName', (req, res) => {
     const songName = req.params.songName;
     const fileName = req.params.fileName;
     const data = fs.readFileSync(`./songs/${songName}/${fileName}`, { encoding: 'utf8' });
-    const youtubeId = JSON.parse(fs.readFileSync(`./songs/${songName}/info.txt`, { encoding: 'utf8' })).youtubeId;
-    res.send({data, youtubeId});
+    res.send({data});
 });
 
 server.listen(10101, () => {

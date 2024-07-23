@@ -69,6 +69,8 @@
         let youtubeVideoId;
         async function onYouTubeIframeAPIReady() {
             await waitForDocumentReady();
+        }
+        function youtubeVideoIdSetting() {
             if (youtubeVideoId) {
                 player = new YT.Player('youtubePlayer', {
                     height: '100%',
@@ -402,6 +404,7 @@
             ctx.font = "70px Comic Arial";
             ctx.fillText("press", 40, 300);
             ctx.fillText("  J  ", 40, 400);
+            youtubeVideoIdSetting();
         }
         function oneFrame() {
             logic();

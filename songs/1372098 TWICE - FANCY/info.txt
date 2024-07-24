@@ -1,0 +1,5 @@
+{
+	"bg":"nominate_nocelestial.jpg",
+	"Audio":"audio.mp3",
+	"youtubeId":"kOHB85vDuow"
+}

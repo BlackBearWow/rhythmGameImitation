@@ -26,6 +26,7 @@
 - [x] 모든 곡 갱신 버튼 기능. songs와 bitmap을 indexedDB에 넣기
 - [x] index페이지에 리듬게임 리스트 보여주기
 - [x] playRhythmGame페이지에서 noteInfo indexedDB에 저장및 활용
+- [] 곡 선택 창 디제이맥스처럼 - css는 transition을 활용하자
 - [] 곡 선택 창에서 백그라운드 뮤직 나오게 - 디제이맥스나 osu를 따라해보자
 - [] 곡 선택 창에서 유튜브 영상 보이게
 - [] 곡 선택 창에서 곡 검색 기능

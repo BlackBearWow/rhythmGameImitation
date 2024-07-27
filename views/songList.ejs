@@ -44,7 +44,7 @@
                 const transaction = db.transaction(["songs", "bitmap"], "readwrite");
                 const songObjectStore = transaction.objectStore("songs");
                 songObjectStore.clear();
-                data.songs.forEach((song)=>{
+                data.songs.forEach((song) => {
                     const request = songObjectStore.add(song);
                     request.onerror = (event) => {
                         console.log(`song 데이터 넣기 에러`);
@@ -52,7 +52,7 @@
                 })
                 const bitmapObjectStore = transaction.objectStore("bitmap");
                 bitmapObjectStore.clear();
-                data.bitmap.forEach((val)=>{
+                data.bitmap.forEach((val) => {
                     const request = bitmapObjectStore.add(val);
                     request.onerror = (event) => {
                         console.log(`bitmap 데이터 넣기 에러`);
@@ -83,12 +83,12 @@
                 const bitmapObjectStore = transaction.objectStore("bitmap");
                 songs = songObjectStore.getAll();
                 songs.onsuccess = (event) => {
-                    if(event.target.result.length == 0){
+                    if (event.target.result.length == 0) {
                         alert("songs 데이터가 없습니다. 곡 갱신하기 버튼을 눌러주세요");
                         return;
                     }
                     $("#accordion").empty();
-                    event.target.result.forEach((val, idx)=>{
+                    event.target.result.forEach((val, idx) => {
                         $("#accordion").append(`<div class="card">
                             <div class="card-header p-0">
                                 <a class="btn p-0" data-bs-toggle="collapse" href="#collapse${val.id}">
@@ -113,7 +113,7 @@
                 }
                 bitmap = bitmapObjectStore.getAll();
                 bitmap.onsuccess = (event) => {
-                    event.target.result.forEach((val, idx)=>{
+                    event.target.result.forEach((val, idx) => {
                         $(`#songData${val.songId}`).append(`<tr onclick="location.href=\`/playRhythmGame/${val.songId}/${val.id}\`;">
                             <th scope="row">${val.level}</th>
                             <td>${val.bitmapName}</td>
@@ -127,11 +127,19 @@
 </head>
 
 <body>
-    <div class="container mt-2">
+    <div class="container-fluid m-0 p-2">
         <button type="button" class="btn btn btn-primary" onclick="location.href='/'">홈으로</button>
         <button type="button" class="btn btn btn-primary" onclick="getAllSongs()">전체 곡 가져오기 / 최신화</button>
-        <h1>곡 리스트</h1>
-        <div id="accordion">
+
+        <div class="row">
+            <div class="col-6">
+                <h1>곡 리스트</h1>
+                <div id="accordion">
+                </div>
+            </div>
+            <div class="col-6">
+                <h1>비트맵 리스트</h1>
+            </div>
         </div>
     </div>
 </body>

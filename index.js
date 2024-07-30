@@ -37,25 +37,6 @@ app.get('/', (req, res) => {
     res.render('index');
 });
 
-app.get('/configuration', (req, res) => {
-    res.render('configuration');
-});
-
-app.get('/songList', (req, res) => {
-    //디렉토리를 읽은 후 리듬게임 리스트를 전송함.
-    let songList = fs.readdirSync('./songs');
-    //디렉토리만 필터
-    songList = songList.filter((val) => fs.statSync(`./songs/${val}`).isDirectory());
-    songList.forEach((val, index) => {
-        songList[index] = { name: songList[index], bg: undefined };
-        if (fs.existsSync(`./songs/${val}/info.txt`)) {
-            let info = fs.readFileSync(`./songs/${val}/info.txt`, { encoding: 'utf8' });
-            songList[index].bg = JSON.parse(info).bg;
-        }
-    })
-    res.render('songList', { songList });
-});
-
 app.get('/getSongListDataByName/:name', (req, res) => {
     const name = req.params.name;
     const songListData = fs.readdirSync(`./songs/${name}`);

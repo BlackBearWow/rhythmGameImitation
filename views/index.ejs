@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="light">
+<html lang="en" data-bs-theme="dark">
 
 <head>
     <title>rhythm game songList</title>
@@ -12,7 +12,7 @@
         }
 
         li.selected {
-            background-color: #00ffff;
+            background-color: #800000;
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
@@ -22,6 +22,13 @@
         let songIndex = 0;
         let bitmap;
         let bitmapIndex = 0;
+        let songBitmapSize = 4;
+        function playRhythmGame() {
+            let songId = $(`#songIndex${songIndex}`).attr('data-songId');
+            let bitmapId = $(`#bitmapIndex${bitmapIndex}`).attr('data-bitmapId');
+            location.href=`/playRhythmGame/${songId}/${bitmapId}`;
+            //console.log(songId, bitmapId);
+        }
         function getAllSongs() {
             $.ajax({
                 url: `getAllSongs`,
@@ -102,7 +109,7 @@
                     $("#songLists").empty();
                     //첫곡은 selected 클래스를 부여함.
                     songIndex = 0;
-                    $("#songLists").append(`<li class="list-group-item m-0 p-0 d-flex align-items-center selected" id="songId1">
+                    $("#songLists").append(`<li class="list-group-item m-0 p-0 d-flex align-items-center selected" id="songIndex${0}" data-songId="${songs[0].id}">
                         <img style="height:70px" src="/songs/${songs[0].songName}/${songs[0].bg}">
                         <div>
                             ${songs[0].songName.substring(0, songs[0].songName.search('-'))} [${songs[0].duration}s]
@@ -110,7 +117,7 @@
                         </div>
                     </li>`)
                     for (let i = 1; i < 11; i++) {
-                        $("#songLists").append(`<li class="list-group-item m-0 p-0 d-flex align-items-center" id="songId${songs[i].id}">
+                        $("#songLists").append(`<li class="list-group-item m-0 p-0 d-flex align-items-center" id="songIndex${i}" data-songId="${songs[i].id}">
                             <img style="height:70px" src="/songs/${songs[i].songName}/${songs[i].bg}">
                             <div>
                                 ${songs[i].songName.substring(0, songs[i].songName.search('-'))} [${songs[i].duration}s]
@@ -118,13 +125,40 @@
                             </div>
                         </li>`)
                     }
+                    songInfoChange(0);
                 }
                 bitmap = bitmapObjectStore.getAll();
                 bitmap.onsuccess = (event) => {
                     bitmap = event.target.result;
-                    bitmapIndex = 0;
+                    listBitmapKeySizeAndLevel(0);
                 }
             };
+        }
+        function songInfoChange(songIndex) {
+            //곡 상세 정보 변경
+            $("#bigImg").attr('src', `/songs/${songs[songIndex].songName}/${songs[songIndex].bg}`);
+            $("#osuNum").text(`osu숫자: ${songs[songIndex].songName.match(/[0-9]+/)[0]}`);
+            $("#madeBy").text(`작곡가 or 만든이: ${songs[songIndex].songName.match(/[^0-9-]+/)[0]}`);
+            $("#infoSongName").text(`제목: ${songs[songIndex].songName.match(/(?<=-)[\s\S]+/)[0]}`);
+            $("#songDuration").text(`곡 길이: ${parseInt(songs[songIndex].duration / 60)}분${songs[songIndex].duration % 60}초 (${songs[songIndex].duration}초)`);
+        }
+        function listBitmapKeySizeAndLevel(songIndex) {
+            // 비트맵들을 키 사이즈와 난이도를 화면에 리스트로 넣는다.
+            bitmapIndex = 0;
+            $("#bitmapLists").empty();
+            let filteredBitmap = bitmap.filter((b) => {
+                return b.songId == (songIndex + 1);
+            })
+            filteredBitmap.sort((a, b) => {
+                return (a.keySize - b.keySize) || (a.level - b.level);
+            })
+            songBitmapSize = filteredBitmap.length;
+            filteredBitmap.forEach((b, idx) => {
+                if (idx == 0)
+                    $("#bitmapLists").append(`<li class="list-group-item flex-fill selected" id="bitmapIndex${idx}" data-bitmapId="${b.id}">${b.keySize}키 ${b.level}</li>`);
+                else
+                    $("#bitmapLists").append(`<li class="list-group-item flex-fill" id="bitmapIndex${idx}" data-bitmapId="${b.id}">${b.keySize}키 ${b.level}</li>`);
+            })
         }
         function changeNoteSpeed(val) {
             $("#noteSpeedNum").html(val);
@@ -172,86 +206,75 @@
                     //최대값이면 변화 없음
                     if (songIndex == max)
                         return;
+                    //비트맵 선택 인덱스 변경
+                    bitmapIndex = 0;
                     //클래스 바꾸기.
-                    $(`#songId${songIndex + 1}`).removeClass("selected");
+                    $(`#songIndex${songIndex}`).removeClass("selected");
                     songIndex += 1;
-                    $(`#songId${songIndex + 1}`).addClass("selected");
+                    $(`#songIndex${songIndex}`).addClass("selected");
                     // 6이상 (max-5)이하면 리스트 추가 제거
                     if (6 <= songIndex && songIndex <= (max - 5)) {
-                        $(`#songId${songIndex - 5}`).remove();
-                        $("#songLists").append(`<li class="list-group-item m-0 p-0 d-flex align-items-center" id="songId${songs[songIndex + 5].id}">
-                            <img style="height:70px" src="/songs/${songs[songIndex + 5].songName}/${songs[songIndex + 5].bg}">
+                        let nextIdx = songIndex + 5;
+                        $(`#songIndex${songIndex - 6}`).remove();
+                        $("#songLists").append(`<li class="list-group-item m-0 p-0 d-flex align-items-center" id="songIndex${nextIdx}" data-songId="${songs[nextIdx].id}">
+                            <img style="height:70px" src="/songs/${songs[nextIdx].songName}/${songs[nextIdx].bg}">
                             <div>
-                                ${songs[songIndex + 5].songName.substring(0, songs[songIndex + 5].songName.search('-'))} [${songs[songIndex + 5].duration}s]
-                                <div class="fw-bold">${songs[songIndex + 5].songName.substring(songs[songIndex + 5].songName.search('-') + 1)}</div>
+                                ${songs[nextIdx].songName.substring(0, songs[nextIdx].songName.search('-'))} [${songs[nextIdx].duration}s]
+                                <div class="fw-bold">${songs[nextIdx].songName.substring(songs[nextIdx].songName.search('-') + 1)}</div>
                             </div>
                         </li>`)
                     }
-                    //곡정보 & 난이도선택 정보 변경
-                    $("#bigImg").attr('src', `/songs/${songs[songIndex].songName}/${songs[songIndex].bg}`);
-                    $("#osuNum").text(`osu숫자: ${songs[songIndex].songName.match(/[0-9]+/)[0]}`);
-                    $("#madeBy").text(`작곡가 or 만든이: ${songs[songIndex].songName.match(/[^0-9-]+/)[0]}`);
-                    $("#infoSongName").text(`제목: ${songs[songIndex].songName.match(/(?<=-)[\s\S]+/)[0]}`);
-                    $("#songDuration").text(`곡 길이: ${parseInt(songs[songIndex].duration/60)}분${songs[songIndex].duration%60}초 (${songs[songIndex].duration}초)`);
-
-                    $("#bitmapLists").empty();
-
-                    let filteredBitmap = bitmap.filter((b)=>{
-                        return b.songId == (songIndex+1);
-                    })
-                    filteredBitmap.sort((a, b)=>{
-                        return (a.keySize-b.keySize) || (a.level-b.level);
-                    })
-                    // key, 난이도 순으로 정렬해서 보여주자.
-                    filteredBitmap.forEach((b)=>{
-                        $("#bitmapLists").append(`<li class="list-group-item flex-fill">${b.keySize}키 ${b.level}</li>`);
-                    })
+                    songInfoChange(songIndex);
+                    listBitmapKeySizeAndLevel(songIndex);
                 }
                 else if (event.key == "ArrowUp") {
                     let max = songs.length - 1;
                     //최소값이면 변화 없음
                     if (songIndex == 0)
                         return;
+                    //비트맵 선택 인덱스 변경
+                    bitmapIndex = 0;
                     //클래스 바꾸기.
-                    $(`#songId${songIndex + 1}`).removeClass("selected");
+                    $(`#songIndex${songIndex}`).removeClass("selected");
                     songIndex -= 1;
-                    $(`#songId${songIndex + 1}`).addClass("selected");
+                    $(`#songIndex${songIndex}`).addClass("selected");
                     // 5이상 (max-6)이하면 리스트 추가 제거
                     if (5 <= songIndex && songIndex <= (max - 6)) {
-                        $(`#songId${songIndex + 7}`).remove();
-                        $("#songLists").prepend(`<li class="list-group-item m-0 p-0 d-flex align-items-center" id="songId${songs[songIndex - 5].id}">
-                            <img style="height:70px" src="/songs/${songs[songIndex - 5].songName}/${songs[songIndex - 5].bg}">
+                        let nextIdx = songIndex - 5;
+                        $(`#songIndex${songIndex + 6}`).remove();
+                        $("#songLists").prepend(`<li class="list-group-item m-0 p-0 d-flex align-items-center" id="songIndex${nextIdx}" data-songId="${songs[nextIdx].id}">
+                            <img style="height:70px" src="/songs/${songs[nextIdx].songName}/${songs[nextIdx].bg}">
                             <div>
-                                ${songs[songIndex - 5].songName.substring(0, songs[songIndex - 5].songName.search('-'))} [${songs[songIndex - 5].duration}s]
-                                <div class="fw-bold">${songs[songIndex - 5].songName.substring(songs[songIndex - 5].songName.search('-') + 1)}</div>
+                                ${songs[nextIdx].songName.substring(0, songs[nextIdx].songName.search('-'))} [${songs[nextIdx].duration}s]
+                                <div class="fw-bold">${songs[nextIdx].songName.substring(songs[nextIdx].songName.search('-') + 1)}</div>
                             </div>
                         </li>`)
                     }
-                    //곡정보 & 난이도선택 정보 변경
-                    $("#bigImg").attr('src', `/songs/${songs[songIndex].songName}/${songs[songIndex].bg}`);
-                    $("#osuNum").text(`osu숫자: ${songs[songIndex].songName.match(/[0-9]+/)[0]}`);
-                    $("#madeBy").text(`작곡가 or 만든이: ${songs[songIndex].songName.match(/[^0-9-]+/)[0]}`);
-                    $("#infoSongName").text(`제목: ${songs[songIndex].songName.match(/(?<=-)[\s\S]+/)[0]}`);
-                    $("#songDuration").text(`곡 길이: ${parseInt(songs[songIndex].duration/60)}분${songs[songIndex].duration%60}초 (${songs[songIndex].duration}초)`);
-
-                    $("#bitmapLists").empty();
-
-                    let filteredBitmap = bitmap.filter((b)=>{
-                        return b.songId == (songIndex+1);
-                    })
-                    filteredBitmap.sort((a, b)=>{
-                        return (a.keySize-b.keySize) || (a.level-b.level);
-                    })
-                    filteredBitmap.forEach((b)=>{
-                        $("#bitmapLists").append(`<li class="list-group-item flex-fill">${b.keySize}키 ${b.level}</li>`);
-                    })
+                    songInfoChange(songIndex);
+                    listBitmapKeySizeAndLevel(songIndex);
                 }
                 //비트맵 선택 좌 우
                 else if (event.key == "ArrowLeft") {
-                    console.log("left");
+                    //처음 비트맵이 선택되어있다면 아무것도 하지 않음.
+                    if (bitmapIndex == 0)
+                        return;
+                    //클래스 바꾸기
+                    $(`#bitmapIndex${bitmapIndex}`).removeClass("selected");
+                    bitmapIndex -= 1;
+                    $(`#bitmapIndex${bitmapIndex}`).addClass("selected");
                 }
                 else if (event.key == "ArrowRight") {
-                    console.log("right");
+                    //마지막 비트맵이 선택되어있다면 아무것도 하지 않음.
+                    if (bitmapIndex == (songBitmapSize - 1))
+                        return;
+                    //클래스 바꾸기
+                    $(`#bitmapIndex${bitmapIndex}`).removeClass("selected");
+                    bitmapIndex += 1;
+                    $(`#bitmapIndex${bitmapIndex}`).addClass("selected");
+                }
+                //엔터
+                else if (event.key == "Enter") {
+                    playRhythmGame();
                 }
             });
         });
@@ -327,9 +350,9 @@
                         <li class="list-group-item" id="songDuration">곡 길이:</li>
                     </ul>
                     <ul class="list-group list-group-horizontal" id="bitmapLists">
-                        <li class="list-group-item flex-fill">4키 1.12난이도</li>
-                        <li class="list-group-item flex-fill">2.12</li>
-                        <li class="list-group-item flex-fill">3.12</li>
+                        <li class="list-group-item flex-fill" data-bitmapId="1">4키 1.12난이도</li>
+                        <li class="list-group-item flex-fill" data-bitmapId="2">2.12</li>
+                        <li class="list-group-item flex-fill" data-bitmapId="3">3.12</li>
                     </ul>
                 </div>
             </div>

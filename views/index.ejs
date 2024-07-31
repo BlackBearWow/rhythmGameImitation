@@ -122,72 +122,7 @@
                 bitmap = bitmapObjectStore.getAll();
                 bitmap.onsuccess = (event) => {
                     bitmap = event.target.result;
-                    event.target.result.forEach((val, idx) => {
-                        $(`#songData${val.songId}`).append(`<tr onclick="location.href=\`/playRhythmGame/${val.songId}/${val.id}\`;">
-                            <th scope="row">${val.level}</th>
-                            <td>${val.bitmapName}</td>
-                        </tr>`);
-                    })
-                }
-            };
-        }
-        function showLists_backup() {
-            const request = indexedDB.open("rhythm");
-            let db;
-            request.onerror = (event) => {
-                console.error(`Database error: ${event.target.errorCode}`);
-            }
-            request.onupgradeneeded = (event) => {
-                db = event.target.result;
-                const songObjectStore = db.createObjectStore("songs", { keyPath: "id" });
-                songObjectStore.createIndex("songName", "songName", { unique: true });
-                const bitmapObjectStore = db.createObjectStore("bitmap", { keyPath: "id" });
-                bitmapObjectStore.createIndex("bitmapName", "bitmapName", { unique: true });
-                const noteInfoObjectStore = db.createObjectStore("noteInfo", { keyPath: "path" });
-            }
-            request.onsuccess = (event) => {
-                db = event.target.result;
-                const transaction = db.transaction(["songs", "bitmap"], "readonly");
-                const songObjectStore = transaction.objectStore("songs");
-                const bitmapObjectStore = transaction.objectStore("bitmap");
-                songs = songObjectStore.getAll();
-                songs.onsuccess = (event) => {
-                    if (event.target.result.length == 0) {
-                        alert("songs 데이터가 없습니다. 곡 갱신하기 버튼을 눌러주세요");
-                        return;
-                    }
-                    $("#accordion").empty();
-                    event.target.result.forEach((val, idx) => {
-                        $("#accordion").append(`<div class="card">
-                            <div class="card-header p-0">
-                                <a class="btn p-0" data-bs-toggle="collapse" href="#collapse${val.id}">
-                                <img style="height:70px" src="/songs/${val.songName}/${val.bg}">
-                                ${val.songName}
-                                [${val.duration}초]
-                                </a>
-                            </div>
-                            <div id="collapse${val.id}" class="collapse" data-bs-parent="#accordion">
-                                <div class="card-body">
-                                    <table class="table table-bordered table-striped-columns">
-                                        <thead>
-                                            <th scope="col">레벨</th><th scope="col">제목</th>
-                                        </thead>
-                                        <tbody id="songData${val.id}">
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>`);
-                    })
-                }
-                bitmap = bitmapObjectStore.getAll();
-                bitmap.onsuccess = (event) => {
-                    event.target.result.forEach((val, idx) => {
-                        $(`#songData${val.songId}`).append(`<tr onclick="location.href=\`/playRhythmGame/${val.songId}/${val.id}\`;">
-                            <th scope="row">${val.level}</th>
-                            <td>${val.bitmapName}</td>
-                        </tr>`);
-                    })
+                    bitmapIndex = 0;
                 }
             };
         }
@@ -252,7 +187,25 @@
                             </div>
                         </li>`)
                     }
-                    console.log("down");
+                    //곡정보 & 난이도선택 정보 변경
+                    $("#bigImg").attr('src', `/songs/${songs[songIndex].songName}/${songs[songIndex].bg}`);
+                    $("#osuNum").text(`osu숫자: ${songs[songIndex].songName.match(/[0-9]+/)[0]}`);
+                    $("#madeBy").text(`작곡가 or 만든이: ${songs[songIndex].songName.match(/[^0-9-]+/)[0]}`);
+                    $("#infoSongName").text(`제목: ${songs[songIndex].songName.match(/(?<=-)[\s\S]+/)[0]}`);
+                    $("#songDuration").text(`곡 길이: ${parseInt(songs[songIndex].duration/60)}분${songs[songIndex].duration%60}초 (${songs[songIndex].duration}초)`);
+
+                    $("#bitmapLists").empty();
+
+                    let filteredBitmap = bitmap.filter((b)=>{
+                        return b.songId == (songIndex+1);
+                    })
+                    filteredBitmap.sort((a, b)=>{
+                        return (a.keySize-b.keySize) || (a.level-b.level);
+                    })
+                    // key, 난이도 순으로 정렬해서 보여주자.
+                    filteredBitmap.forEach((b)=>{
+                        $("#bitmapLists").append(`<li class="list-group-item flex-fill">${b.keySize}키 ${b.level}</li>`);
+                    })
                 }
                 else if (event.key == "ArrowUp") {
                     let max = songs.length - 1;
@@ -274,7 +227,24 @@
                             </div>
                         </li>`)
                     }
-                    console.log("up");
+                    //곡정보 & 난이도선택 정보 변경
+                    $("#bigImg").attr('src', `/songs/${songs[songIndex].songName}/${songs[songIndex].bg}`);
+                    $("#osuNum").text(`osu숫자: ${songs[songIndex].songName.match(/[0-9]+/)[0]}`);
+                    $("#madeBy").text(`작곡가 or 만든이: ${songs[songIndex].songName.match(/[^0-9-]+/)[0]}`);
+                    $("#infoSongName").text(`제목: ${songs[songIndex].songName.match(/(?<=-)[\s\S]+/)[0]}`);
+                    $("#songDuration").text(`곡 길이: ${parseInt(songs[songIndex].duration/60)}분${songs[songIndex].duration%60}초 (${songs[songIndex].duration}초)`);
+
+                    $("#bitmapLists").empty();
+
+                    let filteredBitmap = bitmap.filter((b)=>{
+                        return b.songId == (songIndex+1);
+                    })
+                    filteredBitmap.sort((a, b)=>{
+                        return (a.keySize-b.keySize) || (a.level-b.level);
+                    })
+                    filteredBitmap.forEach((b)=>{
+                        $("#bitmapLists").append(`<li class="list-group-item flex-fill">${b.keySize}키 ${b.level}</li>`);
+                    })
                 }
                 //비트맵 선택 좌 우
                 else if (event.key == "ArrowLeft") {
@@ -291,7 +261,7 @@
 <body>
     <div class="container-fluid">
 
-        <div class="row text-bg-secondary p-1">
+        <div class="row text-bg-secondary p-1 mb-1">
             <div class="col-4">
                 <img src="https://osu.ppy.sh/images/favicon/android-chrome-192x192.png" alt="Logo" width="32">
                 <span class="align-middle">osu mania 리듬게임</span>
@@ -330,9 +300,11 @@
 
         <div class="row">
             <div class="col-6">
-                <h1>곡 리스트</h1>
-                <div id="songs">
-                    <ul class="list-group" id="songLists">
+                <div id="songs" class="card">
+                    <div class="card-header">
+                        <h1>곡 리스트</h1>
+                    </div>
+                    <ul class="list-group list-group-flush" id="songLists">
                         <li class="list-group-item m-0 p-0">
                             <img style="height:70px" src="/songs/120289 Dj Mashiro - Prismatic Lollipops/37945384.png">
                             노래제목
@@ -341,11 +313,25 @@
 
                 </div>
             </div>
-            <div class="col-6">
-                <h1>비트맵 리스트</h1>
-                <img class="card-img-bottom"
-                    src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Men_triple_jump_French_Athletics_Championships_2013_t160700.jpg/400px-Men_triple_jump_French_Athletics_Championships_2013_t160700.jpg?20131027193745"
-                    alt="Title">
+            <div class="col-6" id="songInfo">
+                <div class="card">
+                    <div class="card-header">
+                        <h1>곡정보 & 난이도 선택</h1>
+                    </div>
+                    <img style="width:100%; height:550px; object-fit: cover;" class="card-img-top"
+                        src="/songs/120289 Dj Mashiro - Prismatic Lollipops/37945384.png" id="bigImg">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item" id="osuNum">osu숫자:</li>
+                        <li class="list-group-item" id="madeBy">만든이:</li>
+                        <li class="list-group-item" id="infoSongName">제목:</li>
+                        <li class="list-group-item" id="songDuration">곡 길이:</li>
+                    </ul>
+                    <ul class="list-group list-group-horizontal" id="bitmapLists">
+                        <li class="list-group-item flex-fill">4키 1.12난이도</li>
+                        <li class="list-group-item flex-fill">2.12</li>
+                        <li class="list-group-item flex-fill">3.12</li>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>

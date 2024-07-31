@@ -19,6 +19,7 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script>
         let songs;
+        let allSongs;
         let songIndex = 0;
         let bitmap;
         let bitmapIndex = 0;
@@ -26,7 +27,7 @@
         function playRhythmGame() {
             let songId = $(`#songIndex${songIndex}`).attr('data-songId');
             let bitmapId = $(`#bitmapIndex${bitmapIndex}`).attr('data-bitmapId');
-            location.href=`/playRhythmGame/${songId}/${bitmapId}`;
+            location.href = `/playRhythmGame/${songId}/${bitmapId}`;
             //console.log(songId, bitmapId);
         }
         function getAllSongs() {
@@ -77,10 +78,10 @@
                     }
                 })
                 alert("전체 곡 가져오기 / 최신화를 하였습니다");
-                showLists();
+                showAllLists();
             };
         }
-        function showLists() {
+        function showAllLists() {
             const request = indexedDB.open("rhythm");
             let db;
             request.onerror = (event) => {
@@ -105,27 +106,9 @@
                         alert("songs 데이터가 없습니다. 곡 갱신하기 버튼을 눌러주세요");
                         return;
                     }
-                    songs = event.target.result;
-                    $("#songLists").empty();
-                    //첫곡은 selected 클래스를 부여함.
-                    songIndex = 0;
-                    $("#songLists").append(`<li class="list-group-item m-0 p-0 d-flex align-items-center selected" id="songIndex${0}" data-songId="${songs[0].id}">
-                        <img style="height:70px" src="/songs/${songs[0].songName}/${songs[0].bg}">
-                        <div>
-                            ${songs[0].songName.substring(0, songs[0].songName.search('-'))} [${songs[0].duration}s]
-                            <div class="fw-bold">${songs[0].songName.substring(songs[0].songName.search('-') + 1)}</div>
-                        </div>
-                    </li>`)
-                    for (let i = 1; i < 11; i++) {
-                        $("#songLists").append(`<li class="list-group-item m-0 p-0 d-flex align-items-center" id="songIndex${i}" data-songId="${songs[i].id}">
-                            <img style="height:70px" src="/songs/${songs[i].songName}/${songs[i].bg}">
-                            <div>
-                                ${songs[i].songName.substring(0, songs[i].songName.search('-'))} [${songs[i].duration}s]
-                                <div class="fw-bold">${songs[i].songName.substring(songs[i].songName.search('-') + 1)}</div>
-                            </div>
-                        </li>`)
-                    }
-                    songInfoChange(0);
+                    allSongs = event.target.result;
+                    songs = allSongs;
+                    listSongList();
                 }
                 bitmap = bitmapObjectStore.getAll();
                 bitmap.onsuccess = (event) => {
@@ -134,20 +117,65 @@
                 }
             };
         }
+        function listSongList() {
+            $("#songCount").text(`곡 리스트: ${songs.length}곡`);
+            $("#songLists").empty();
+            //첫곡은 selected 클래스를 부여함.
+            songIndex = 0;
+            for (let i = 0; i < 11; i++) {
+                if (songs.length <= i)
+                    break;
+                if (i == 0) {
+                    $("#songLists").append(`<li class="list-group-item m-0 p-0 d-flex align-items-center selected" id="songIndex${0}" data-songId="${songs[0].id}">
+                        <img style="height:70px" src="/songs/${songs[0].songName}/${songs[0].bg}">
+                        <div>
+                            ${songs[0].songName.substring(0, songs[0].songName.search('-'))} [${songs[0].duration}s]
+                            <div class="fw-bold">${songs[0].songName.substring(songs[0].songName.search('-') + 1)}</div>
+                        </div>
+                    </li>`)
+                }
+                else {
+                    $("#songLists").append(`<li class="list-group-item m-0 p-0 d-flex align-items-center" id="songIndex${i}" data-songId="${songs[i].id}">
+                        <img style="height:70px" src="/songs/${songs[i].songName}/${songs[i].bg}">
+                        <div>
+                            ${songs[i].songName.substring(0, songs[i].songName.search('-'))} [${songs[i].duration}s]
+                            <div class="fw-bold">${songs[i].songName.substring(songs[i].songName.search('-') + 1)}</div>
+                        </div>
+                    </li>`)
+                }
+            }
+            songInfoChange(0);
+        }
         function songInfoChange(songIndex) {
             //곡 상세 정보 변경
-            $("#bigImg").attr('src', `/songs/${songs[songIndex].songName}/${songs[songIndex].bg}`);
-            $("#osuNum").text(`osu숫자: ${songs[songIndex].songName.match(/[0-9]+/)[0]}`);
-            $("#madeBy").text(`작곡가 or 만든이: ${songs[songIndex].songName.match(/[^0-9-]+/)[0]}`);
-            $("#infoSongName").text(`제목: ${songs[songIndex].songName.match(/(?<=-)[\s\S]+/)[0]}`);
-            $("#songDuration").text(`곡 길이: ${parseInt(songs[songIndex].duration / 60)}분${songs[songIndex].duration % 60}초 (${songs[songIndex].duration}초)`);
+            if (songs.length == 0) {
+                $("#bigImg").attr('src', `https://img1.daumcdn.net/thumb/S56x56/?scode=mtistory2&fname=https%3A%2F%2Ftistory1.daumcdn.net%2Ftistory%2F4106079%2Fattach%2Fab2b0b1cc931435caf3e524b9f5ec7e0`);
+                $("#osuNum").text(`곡 검색 결과가 없습니다.`);
+                $("#madeBy").text(`곡 검색 결과가 없습니다.`);
+                $("#infoSongName").text(`곡 검색 결과가 없습니다.`);
+                $("#songDuration").text(`곡 검색 결과가 없습니다.`);
+                $("#songTag").text(`곡 검색 결과가 없습니다.`);
+            }
+            else {
+                $("#bigImg").attr('src', `/songs/${songs[songIndex].songName}/${songs[songIndex].bg}`);
+                $("#osuNum").text(`osu숫자: ${songs[songIndex].songName.match(/[0-9]+/)[0]}`);
+                $("#madeBy").text(`작곡가 or 만든이: ${songs[songIndex].songName.match(/[^0-9-]+/)[0]}`);
+                $("#infoSongName").text(`제목: ${songs[songIndex].songName.match(/(?<=-)[\s\S]+/)[0]}`);
+                $("#songDuration").text(`곡 길이: ${parseInt(songs[songIndex].duration / 60)}분${songs[songIndex].duration % 60}초 (${songs[songIndex].duration}초)`);
+                $("#songTag").text(`태그:${songs[songIndex].tags}`);
+            }
         }
         function listBitmapKeySizeAndLevel(songIndex) {
             // 비트맵들을 키 사이즈와 난이도를 화면에 리스트로 넣는다.
             bitmapIndex = 0;
             $("#bitmapLists").empty();
+            //song이 없다면 리턴
+            if(songs.length == 0)
+                return;
+
             let filteredBitmap = bitmap.filter((b) => {
-                return b.songId == (songIndex + 1);
+                //수정요망.
+                return b.songId == $(`#songIndex${songIndex}`).attr('data-songId');
             })
             filteredBitmap.sort((a, b) => {
                 return (a.keySize - b.keySize) || (a.level - b.level);
@@ -168,10 +196,23 @@
             $("#canvasOpacityNum").html(val);
             localStorage.setItem("canvasOpacity", val);
         }
+        function filterSongsBySongName(val) {
+            //allSongs에서 songs로 검색어를 이용해 곡들을 필터한다.
+            if (val == "") {
+                songs = allSongs;
+            }
+            else {
+                songs = allSongs.filter((s) => {
+                    return s.songName.toLowerCase().includes(val.toLowerCase());
+                })
+            }
+            listSongList();
+            listBitmapKeySizeAndLevel(0);
+        }
         //document가 로드되면.
         $(function () {
             //indexedDB에서 곡들을 보여줌
-            showLists();
+            showAllLists();
 
             //설정창에 필요한것들
             let noteSpeed = localStorage.getItem("noteSpeed");
@@ -193,10 +234,18 @@
                 $("#canvasOpacityNum").html(canvasOpacity);
                 $("#canvasOpacity").val(canvasOpacity);
             }
-
-            //곡 리스트 리스너 등록.
+            //곡 검색창 이벤트 리스너 등록.
+            $("#songSearch").on('keyup', function (event) {
+                //엔터치면 포커스가 풀림.
+                if (event.key == "Enter") {
+                    $("#songSearch").blur();
+                }
+                else 
+                    filterSongsBySongName(event.target.value);
+            });
+            //키보드 이벤트 리스너 등록.
             $(document).on('keydown', function (event) {
-                //곡 검색 창이라면 키보드를 눌러도 아무 일이 일어나지 않는다.
+                //곡 검색 창이라면 아무일도 일어나지 않음.
                 if (event.target.id == "songSearch") {
                     return;
                 }
@@ -325,7 +374,7 @@
             <div class="col-6">
                 <div id="songs" class="card">
                     <div class="card-header">
-                        <h1>곡 리스트</h1>
+                        <h1 id="songCount">곡 리스트: 0곡</h1>
                     </div>
                     <ul class="list-group list-group-flush" id="songLists">
                         <li class="list-group-item m-0 p-0">
@@ -348,6 +397,7 @@
                         <li class="list-group-item" id="madeBy">만든이:</li>
                         <li class="list-group-item" id="infoSongName">제목:</li>
                         <li class="list-group-item" id="songDuration">곡 길이:</li>
+                        <li class="list-group-item" id="songTag">태그:</li>
                     </ul>
                     <ul class="list-group list-group-horizontal" id="bitmapLists">
                         <li class="list-group-item flex-fill" data-bitmapId="1">4키 1.12난이도</li>

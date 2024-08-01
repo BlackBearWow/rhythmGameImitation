@@ -6,6 +6,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
         li {
             transition: all 0.5s;
@@ -24,11 +25,50 @@
         let bitmap;
         let bitmapIndex = 0;
         let songBitmapSize = 4;
+        //음악재생 관련 변수들
+        let bgm = {
+            audio: new Audio(),
+            play: function () {
+                if(bgm.audio.paused) {
+                    bgm.audio.play();
+                    bgm.updateMusicProgress(songs[songIndex].songName);
+                }
+            },
+            pause: function () {
+                if(bgm.audio.paused == false) {
+                    bgm.audio.pause();
+                }
+            },
+            stop: function () {
+                bgm.puase();
+                bgm.audio.currentTime=0;
+            },
+            setVolume: function (val) {
+                bgm.audio.volume = val/100;
+            },
+            changeMusic: function (beforeSongName) {
+                //현재 검색결과가 없거나 다른 노래로 바뀌었다면 노래재생 안함.
+                if ((songs.length == 0) || (!beforeSongName))
+                    return;
+                else if (beforeSongName != songs[songIndex].songName)
+                    return;
+                //src바꾸고 로드하고 재생.
+                bgm.audio.src = `/songs/${songs[songIndex].songName}/${songs[songIndex].Audio}`;
+                bgm.audio.play();
+                bgm.updateMusicProgress(songs[songIndex].songName);
+            },
+            updateMusicProgress: function (beforeSongName) {
+                if (bgm.audio.paused || (beforeSongName != songs[songIndex].songName))
+                    return;
+                $("#progressBar").text(`${parseInt(bgm.audio.currentTime)}/${parseInt(bgm.audio.duration)}`);
+                $("#progressBar").width(`${100 * bgm.audio.currentTime / bgm.audio.duration}%`);
+                setTimeout(bgm.updateMusicProgress, 1000, songs[songIndex].songName);
+            }
+        }
         function playRhythmGame() {
             let songId = $(`#songIndex${songIndex}`).attr('data-songId');
             let bitmapId = $(`#bitmapIndex${bitmapIndex}`).attr('data-bitmapId');
             location.href = `/playRhythmGame/${songId}/${bitmapId}`;
-            //console.log(songId, bitmapId);
         }
         function getAllSongs() {
             $.ajax({
@@ -170,7 +210,7 @@
             bitmapIndex = 0;
             $("#bitmapLists").empty();
             //song이 없다면 리턴
-            if(songs.length == 0)
+            if (songs.length == 0)
                 return;
 
             let filteredBitmap = bitmap.filter((b) => {
@@ -196,6 +236,11 @@
             $("#canvasOpacityNum").html(val);
             localStorage.setItem("canvasOpacity", val);
         }
+        function changeVolume(val) {
+            $("#volumeNum").html(val);
+            localStorage.setItem("volume", val);
+            bgm.setVolume(val);
+        }
         function filterSongsBySongName(val) {
             //allSongs에서 songs로 검색어를 이용해 곡들을 필터한다.
             if (val == "") {
@@ -217,6 +262,7 @@
             //설정창에 필요한것들
             let noteSpeed = localStorage.getItem("noteSpeed");
             let canvasOpacity = localStorage.getItem("canvasOpacity");
+            let volume = localStorage.getItem("volume");
             // localStorage에 값이 없다면 새로 저장한다. 
             if (noteSpeed == null) {
                 localStorage.setItem("noteSpeed", "1");
@@ -234,13 +280,22 @@
                 $("#canvasOpacityNum").html(canvasOpacity);
                 $("#canvasOpacity").val(canvasOpacity);
             }
+            //볼륨설정 초기값
+            if (volume == null) {
+                localStorage.setItem("volume", "100")
+            }
+            else {
+                $("#volumeNum").html(volume);
+                $("#volume").val(volume);
+                bgm.setVolume(volume);
+            }
             //곡 검색창 이벤트 리스너 등록.
             $("#songSearch").on('keyup', function (event) {
                 //엔터치면 포커스가 풀림.
                 if (event.key == "Enter") {
                     $("#songSearch").blur();
                 }
-                else 
+                else
                     filterSongsBySongName(event.target.value);
             });
             //키보드 이벤트 리스너 등록.
@@ -275,6 +330,8 @@
                     }
                     songInfoChange(songIndex);
                     listBitmapKeySizeAndLevel(songIndex);
+                    if (songs.length > 0)
+                        setTimeout(bgm.changeMusic, 800, songs[songIndex].songName);
                 }
                 else if (event.key == "ArrowUp") {
                     let max = songs.length - 1;
@@ -301,6 +358,8 @@
                     }
                     songInfoChange(songIndex);
                     listBitmapKeySizeAndLevel(songIndex);
+                    if (songs.length > 0)
+                        setTimeout(bgm.changeMusic, 800, songs[songIndex].songName);
                 }
                 //비트맵 선택 좌 우
                 else if (event.key == "ArrowLeft") {
@@ -334,12 +393,31 @@
     <div class="container-fluid">
 
         <div class="row text-bg-secondary p-1 mb-1">
-            <div class="col-4">
+            <div class="col-2">
                 <img src="https://osu.ppy.sh/images/favicon/android-chrome-192x192.png" alt="Logo" width="32">
                 <span class="align-middle">osu mania 리듬게임</span>
             </div>
-            <div class="col-4">
-                <input id="songSearch" class="form-control" type="text" placeholder="곡이름 검색하기">
+            <div class="col-4 d-flex align-items-center">
+                <div class="btn-group me-1">
+                    <button type="button" class="btn btn-outline-warning py-1 px-2 fs-5"
+                        onclick="bgm.play();">
+                        <i class="bi bi-play-fill"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-warning py-1 px-2 fs-5" onclick="bgm.pause();">
+                        <i class="bi bi-pause-fill"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-warning py-1 px-2 fs-5"
+                        onclick="bgm.stop();">
+                        <i class="bi bi-stop-fill"></i>
+                    </button>
+                </div>
+                <div class="progress flex-fill" role="progressbar" style="height: 25px;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated text-bg-warning"
+                        id="progressBar" style="width:50%">현재 초/전체 초</div>
+                </div>
+            </div>
+            <div class="col-2">
+                <input id="songSearch" class="form-control" type="text" placeholder="곡 검색하기">
             </div>
             <div class="col-4 d-flex justify-content-end">
                 <button type="button" class="btn btn-primary me-2">도움말</button>
@@ -356,14 +434,18 @@
                         <!--위에서 내려오는 속도-->
                         <label for="noteSpeed" class="form-label">노트가 위에서 내려오는 속도: </label>
                         <a id="noteSpeedNum">1</a>
-                        <input type="range" class="form-range" min="0.3" max="3" step="0.1" id="noteSpeed"
+                        <input type="range" class="form-range" min="0.3" max="3" step="0.1" id="noteSpeed" value="1"
                             oninput="changeNoteSpeed(this.value)">
                         <!--canvas 투명도-->
                         <label for="canvasOpacity" class="form-label">canvas 투명도(1에 가까울수록 선명함): </label>
                         <a id="canvasOpacityNum">1</a>
-                        <input type="range" class="form-range" min="0.2" max="1" step="0.05" id="canvasOpacity"
+                        <input type="range" class="form-range" min="0.2" max="1" step="0.05" id="canvasOpacity" value="1"
                             oninput="changeCanvasOpacity(this.value)">
-                        <button type="button" class="btn btn-primary" onclick="">라이트모드 / 다크모드</button>
+                        <!--볼륨 조절-->
+                        <label for="volume" class="form-label">볼륨 조절: </label>
+                        <a id="volumeNum">100</a>
+                        <input type="range" class="form-range" min="0" max="100" step="5" id="volume" value="100"
+                            oninput="changeVolume(this.value)">
                     </div>
                 </div>
                 <button type="button" class="btn btn-primary" onclick="getAllSongs()">전체 곡 가져오기 / 최신화</button>

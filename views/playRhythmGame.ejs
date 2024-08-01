@@ -20,6 +20,7 @@
             'j': { pressing: false, press: false }, 'k': { pressing: false, press: false },
             'l': { pressing: false, press: false }, ';': { pressing: false, press: false },
         };
+        let volume = 1;
         //osu file format분석에 필요한 변수들
         //object와 배열로 만들 것이다.
         let General;
@@ -114,12 +115,15 @@
                             keyBoard[e.key]['pressing'] = false;
                         }
                     });
-                    // 노트 속도와 canvas투명도 설정 하기
+                    // 노트 속도와 canvas투명도, 볼륨 설정 하기
                     if (localStorage.getItem("noteSpeed") != null) {
                         noteSpeed = Number(localStorage.getItem("noteSpeed"));
                     }
                     if (localStorage.getItem("canvasOpacity") != null) {
                         $("#can").css("opacity", Number(localStorage.getItem("canvasOpacity")));
+                    }
+                    if (localStorage.getItem("volume")) {
+                        volume = localStorage.getItem("volume")/100;
                     }
                     resolve();
                 })
@@ -243,6 +247,7 @@
                 })
                 General = temp;
                 bgm = new Audio(`/songs/${songName}/${General.AudioFilename}`);
+                bgm.volume = volume;
             }
             if (General.Mode != 3) {
                 alertAndHistoryBack('매니아 모드 맵이 아닙니다.');
@@ -396,7 +401,9 @@
 
         function initialize() {
             hitSound = new Audio('/hitNormal/soft-hitnormal8.wav');
+            hitSound.volume = volume;
             missSound = new Audio('/hitNormal/miss.mp3');
+            missSound.volume = volume;
             height = can.clientHeight;
             can.height = height;
             ctx.fillRect(0, 0, width, height);

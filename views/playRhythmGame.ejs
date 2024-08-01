@@ -71,27 +71,9 @@
         async function onYouTubeIframeAPIReady() {
             await waitForDocumentReady();
         }
-        function youtubeVideoIdSetting() {
-            if (youtubeVideoId) {
-                player = new YT.Player('youtubePlayer', {
-                    height: '100%',
-                    width: '100%',
-                    videoId: youtubeVideoId,
-                    //ArmDp-zijuc
-                    //F-bXO4irRWc 변태왕자
-                    playerVars: {
-                        'playsinline': 1,
-                        'controls': 0,
-                        'rel': 0
-                    },
-                    events: {
-                        'onReady': onPlayerReady
-                    }
-                })
-            }
-            else {
-                onPlayerReady();
-            }
+        function alertAndHistoryBack(msg) {
+            alert(msg);
+            history.go(-1);
         }
         function waitForDocumentReady() {
             return new Promise((resolve) => {
@@ -129,34 +111,7 @@
                 })
             })
         }
-        function onPlayerReady() {
-            $("#can").focus();
-            $("#can").on("keydown", startRhythmGame);
-        }
-        function startRhythmGame(e) {
-            if (e.key == "j") {
-                startTime = new Date().getTime();
-                startTime += parseInt(General['AudioLeadIn']);
-                setTimeout(() => {
-                    if (youtubeVideoId) {
-                        player.playVideo();
-                        player.mute();
-                    }
-                    bgm.play();
-                    bgm.onended = function () {
-                        alertAndHistoryBack('노래가 끝났습니다');
-                    }
-                }, parseInt(General['AudioLeadIn']));
-                //General['AudioLeadIn']은 전체적인 시작 자체를 늦추는 것이다. 오디오만의 싱크를 위한 것이 아님.
-                $("#can").off("keydown", startRhythmGame);
-                requestAnimationFrame(oneFrame);
-            }
-        }
 
-        function alertAndHistoryBack(msg) {
-            alert(msg);
-            history.go(-1);
-        }
         function getFileData() {
             const songId = window.location.pathname.split('/')[2];
             const bitmapId = window.location.pathname.split('/')[3];
@@ -309,6 +264,25 @@
                 setBackGround();
             }
         }
+        function setBackGround() {
+            //Background and Video events가 배열이라면 배경과 영상이 배열에 담겨있고, 배열이 아니라면 배경이다.
+            if (typeof (Events['Background and Video events']) == "string") {
+                $('#mainDiv').append(`<img src="/songs/${songName}/${Events['Background and Video events'].match(/(?<=")[^"]+/)[0]}" style="width: 100%;position: absolute;object-fit: cover;z-index:-1">`)
+            }
+            //info.txt를 만들며 해당 코드는 사용하지 않는다.
+            else {
+                if (youtubeVideoId == "") {
+                    if (Events['Background and Video events'][0].startsWith("0,")) {
+                        //0번째 index가 배경이미지일경우
+                        $('#mainDiv').append(`<img src="/songs/${songName}/${Events['Background and Video events'][0].match(/(?<=")[^"]+/)[0]}" style="width: 100%;position: absolute;object-fit: cover;z-index:-1">`)
+                    }
+                    else {
+                        //1번째 index가 배경이미지일경우
+                        $('#mainDiv').append(`<img src="/songs/${songName}/${Events['Background and Video events'][1].match(/(?<=")[^"]+/)[0]}" style="width: 100%;position: absolute;object-fit: cover;z-index:-1">`)
+                    }
+                }
+            }
+        }
         function analyseTimingPoints() {
             if (TimingPoints) {
                 TimingPoints = TimingPoints[0].trim();
@@ -379,25 +353,6 @@
                 alertAndHistoryBack('hitObject가 없습니다.');
             }
         }
-        function setBackGround() {
-            //Background and Video events가 배열이라면 배경과 영상이 배열에 담겨있고, 배열이 아니라면 배경이다.
-            if (typeof (Events['Background and Video events']) == "string") {
-                $('#mainDiv').append(`<img src="/songs/${songName}/${Events['Background and Video events'].match(/(?<=")[^"]+/)[0]}" style="width: 100%;position: absolute;object-fit: cover;z-index:-1">`)
-            }
-            //info.txt를 만들며 해당 코드는 사용하지 않는다.
-            else {
-                if (youtubeVideoId == "") {
-                    if (Events['Background and Video events'][0].startsWith("0,")) {
-                        //0번째 index가 배경이미지일경우
-                        $('#mainDiv').append(`<img src="/songs/${songName}/${Events['Background and Video events'][0].match(/(?<=")[^"]+/)[0]}" style="width: 100%;position: absolute;object-fit: cover;z-index:-1">`)
-                    }
-                    else {
-                        //1번째 index가 배경이미지일경우
-                        $('#mainDiv').append(`<img src="/songs/${songName}/${Events['Background and Video events'][1].match(/(?<=")[^"]+/)[0]}" style="width: 100%;position: absolute;object-fit: cover;z-index:-1">`)
-                    }
-                }
-            }
-        }
 
         function initialize() {
             hitSound = new Audio('/hitNormal/soft-hitnormal8.wav');
@@ -412,6 +367,60 @@
             ctx.fillText("press", 40, 300);
             ctx.fillText("  J  ", 40, 400);
             youtubeVideoIdSetting();
+        }
+        function youtubeVideoIdSetting() {
+            if (youtubeVideoId) {
+                player = new YT.Player('youtubePlayer', {
+                    height: '100%',
+                    width: '100%',
+                    videoId: youtubeVideoId,
+                    //ArmDp-zijuc
+                    //F-bXO4irRWc 변태왕자
+                    playerVars: {
+                        'playsinline': 1,
+                        'controls': 0,
+                        'rel': 0
+                    },
+                    events: {
+                        'onReady': onPlayerReady,
+                        'onError': function(event){
+                            console.log(`youtube error: ${event.data}`);
+                        }
+                    }
+                })
+            }
+            else {
+                onPlayerReady();
+            }
+        }
+        function onPlayerReady() {
+            $("#can").focus();
+            $("#can").on("keydown", startRhythmGame);
+        }
+        function startRhythmGame(e) {
+            if (e.key == "j") {
+                startTime = new Date().getTime();
+                //startTime += parseInt(General['AudioLeadIn']);
+                startTime += 2000;
+                if(youtubeVideoId) {
+                    player.mute();
+                    player.playVideo();
+                    player.pauseVideo();
+                    player.seekTo(0, true);
+                }
+                setTimeout(() => {
+                    if (youtubeVideoId) {
+                        player.playVideo();
+                    }
+                    bgm.play();
+                    bgm.onended = function () {
+                        alertAndHistoryBack('노래가 끝났습니다');
+                    }
+                }, 2000);
+                //General['AudioLeadIn']은 전체적인 시작 자체를 늦추는 것이다. 오디오만의 싱크를 위한 것이 아님.
+                $("#can").off("keydown", startRhythmGame);
+                requestAnimationFrame(oneFrame);
+            }
         }
         function oneFrame() {
             logic();
@@ -502,102 +511,6 @@
                     }
                 }
             }
-            //d
-            // if (HitObjects['d'].length != 0) {
-            //     if (HitObjects['d'][0][1] == 0) { //단일 노트라면
-            //         const timeGap = parseInt(HitObjects['d'][0][0]) - flowTime;
-            //         if (timeGap <= -timeCutLine) {
-            //             HitObjects['d'].shift();
-            //             hitMiss('miss');
-            //         }
-            //     }
-            //     else {  //hold 노트라면
-            //         const timeGap = parseInt(HitObjects['d'][0][0]) - flowTime;
-            //         const timeGap2 = parseInt(HitObjects['d'][0][1]) - flowTime;
-            //         //처음 누를 때가 지나갔는데 키를 누르고있지 않다면
-            //         if ((timeGap <= -timeCutLine) && !keyBoard['d']['pressing']) {
-            //             HitObjects['d'].shift();
-            //             hitMiss('miss');
-            //         }
-            //         //마지막 뗄 떼가 지나가면
-            //         else if (timeGap2 <= -timeCutLine) {
-            //             HitObjects['d'].shift();
-            //             hitMiss('miss');
-            //         }
-            //     }
-            // }
-            // //f
-            // if (HitObjects[192].length != 0) {
-            //     if (HitObjects[192][0][1] == 0) { //단일 노트라면
-            //         const timeGap = parseInt(HitObjects[192][0][0]) - flowTime;
-            //         if (timeGap <= -timeCutLine) {
-            //             HitObjects[192].shift();
-            //             hitMiss('miss');
-            //         }
-            //     }
-            //     else {  //hold 노트라면
-            //         const timeGap = parseInt(HitObjects[192][0][0]) - flowTime;
-            //         const timeGap2 = parseInt(HitObjects[192][0][1]) - flowTime;
-            //         //처음 누를 때가 지나갔는데 키를 누르고있지 않다면
-            //         if ((timeGap <= -timeCutLine) && !keyBoard['f']['pressing']) {
-            //             HitObjects[192].shift();
-            //             hitMiss('miss');
-            //         }
-            //         //마지막 뗄 떼가 지나가면
-            //         if (timeGap2 <= -timeCutLine) {
-            //             HitObjects[192].shift();
-            //             hitMiss('miss');
-            //         }
-            //     }
-            // }
-            // //j
-            // if (HitObjects[320].length != 0) {
-            //     if (HitObjects[320][0][1] == 0) { //단일 노트라면
-            //         const timeGap = parseInt(HitObjects[320][0][0]) - flowTime;
-            //         if (timeGap <= -timeCutLine) {
-            //             HitObjects[320].shift();
-            //             hitMiss('miss');
-            //         }
-            //     }
-            //     else {  //hold 노트라면
-            //         const timeGap = parseInt(HitObjects[320][0][0]) - flowTime;
-            //         const timeGap2 = parseInt(HitObjects[320][0][1]) - flowTime;
-            //         //처음 누를 때가 지나갔는데 키를 누르고있지 않다면
-            //         if ((timeGap <= -timeCutLine) && !keyBoard['j']['pressing']) {
-            //             HitObjects[320].shift();
-            //             hitMiss('miss');
-            //         }
-            //         //마지막 뗄 떼가 지나가면
-            //         if (timeGap2 <= -timeCutLine) {
-            //             HitObjects[320].shift();
-            //             hitMiss('miss');
-            //         }
-            //     }
-            // }
-            // //k
-            // if (HitObjects[448].length != 0) {
-            //     if (HitObjects[448][0][1] == 0) { //단일 노트라면
-            //         const timeGap = parseInt(HitObjects[448][0][0]) - flowTime;
-            //         if (timeGap <= -timeCutLine) {
-            //             HitObjects[448].shift();
-            //             hitMiss('miss');
-            //         }
-            //     }
-            //     else {  //hold 노트라면
-            //         const timeGap = parseInt(HitObjects[448][0][0]) - flowTime;
-            //         const timeGap2 = parseInt(HitObjects[448][0][1]) - flowTime;
-            //         //처음 누를 때가 지나갔는데 키를 누르고있지 않다면
-            //         if ((timeGap <= -timeCutLine) && !keyBoard['k']['pressing']) {
-            //             HitObjects[448].shift();
-            //             hitMiss('miss');
-            //         }
-            //         //마지막 뗄 떼가 지나가면
-            //         if (timeGap2 <= -timeCutLine) {
-            //             HitObjects[448].shift();
-            //             hitMiss('miss');
-            //         }
-            //     }
-            // }
         }
         function hitMiss(what) {
             comboFontSize = 60; hitFontSize = 60;

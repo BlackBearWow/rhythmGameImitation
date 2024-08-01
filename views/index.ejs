@@ -29,22 +29,25 @@
         let bgm = {
             audio: new Audio(),
             play: function () {
-                if(bgm.audio.paused) {
+                if (bgm.audio.paused) {
                     bgm.audio.play();
                     bgm.updateMusicProgress(songs[songIndex].songName);
+                    $("#progressBar").addClass("progress-bar-animated");
                 }
             },
             pause: function () {
-                if(bgm.audio.paused == false) {
+                if (bgm.audio.paused == false) {
                     bgm.audio.pause();
+                    $("#progressBar").removeClass("progress-bar-animated");
                 }
             },
             stop: function () {
-                bgm.puase();
-                bgm.audio.currentTime=0;
+                bgm.pause();
+                bgm.audio.currentTime = 0;
+                $("#progressBar").width(`0%`);
             },
             setVolume: function (val) {
-                bgm.audio.volume = val/100;
+                bgm.audio.volume = val / 100;
             },
             changeMusic: function (beforeSongName) {
                 //현재 검색결과가 없거나 다른 노래로 바뀌었다면 노래재생 안함.
@@ -399,28 +402,45 @@
             </div>
             <div class="col-4 d-flex align-items-center">
                 <div class="btn-group me-1">
-                    <button type="button" class="btn btn-outline-warning py-1 px-2 fs-5"
-                        onclick="bgm.play();">
+                    <button type="button" class="btn btn-outline-warning py-1 px-2 fs-5" onclick="bgm.play();">
                         <i class="bi bi-play-fill"></i>
                     </button>
                     <button type="button" class="btn btn-outline-warning py-1 px-2 fs-5" onclick="bgm.pause();">
                         <i class="bi bi-pause-fill"></i>
                     </button>
-                    <button type="button" class="btn btn-outline-warning py-1 px-2 fs-5"
-                        onclick="bgm.stop();">
+                    <button type="button" class="btn btn-outline-warning py-1 px-2 fs-5" onclick="bgm.stop();">
                         <i class="bi bi-stop-fill"></i>
                     </button>
                 </div>
                 <div class="progress flex-fill" role="progressbar" style="height: 25px;">
-                    <div class="progress-bar progress-bar-striped progress-bar-animated text-bg-warning"
-                        id="progressBar" style="width:50%">현재 초/전체 초</div>
+                    <div class="progress-bar progress-bar-striped text-bg-warning" id="progressBar" style="width:50%">현재
+                        초/전체 초</div>
                 </div>
             </div>
             <div class="col-2">
                 <input id="songSearch" class="form-control" type="text" placeholder="곡 검색하기">
             </div>
             <div class="col-4 d-flex justify-content-end">
-                <button type="button" class="btn btn-primary me-2">도움말</button>
+                <button type="button" class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#myModal">도움말</button>
+                <!-- The Modal -->
+                <div class="modal fade" id="myModal">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <!-- Modal Header -->
+                            <div class="modal-header">
+                                <h4 class="modal-title">도움말</h4>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <!-- Modal body -->
+                            <div class="modal-body">
+                                <p>곡 선택: 방향키 위 아래</p>
+                                <p>난이도 선택: 방향키 왼쪽 오른쪽</p>
+                                <p>플레이: 엔터</p>
+                                <p>곡 검색하는법: osu숫자 또는 작곡가 또는 제목을 검색창에 입력</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <button type="button" class="btn btn-primary me-2">로그인</button>
                 <button type="button" class="btn btn-primary me-2" data-bs-toggle="offcanvas"
                     data-bs-target="#offcanvasExample" aria-controls="offcanvasExample">설정</button>
@@ -439,8 +459,8 @@
                         <!--canvas 투명도-->
                         <label for="canvasOpacity" class="form-label">canvas 투명도(1에 가까울수록 선명함): </label>
                         <a id="canvasOpacityNum">1</a>
-                        <input type="range" class="form-range" min="0.2" max="1" step="0.05" id="canvasOpacity" value="1"
-                            oninput="changeCanvasOpacity(this.value)">
+                        <input type="range" class="form-range" min="0.2" max="1" step="0.05" id="canvasOpacity"
+                            value="1" oninput="changeCanvasOpacity(this.value)">
                         <!--볼륨 조절-->
                         <label for="volume" class="form-label">볼륨 조절: </label>
                         <a id="volumeNum">100</a>

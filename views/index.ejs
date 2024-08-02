@@ -257,6 +257,12 @@
             listSongList();
             listBitmapKeySizeAndLevel(0);
         }
+        function addSong() {
+            console.log("곡 추가 기능 만들기");
+            // regex로 링크가 이상한지 검사
+            // 링크가 안이상하면 서버에 전송
+            // 서버에서 오류 또는 성공 응답 받기
+        }
         //document가 로드되면.
         $(function () {
             //indexedDB에서 곡들을 보여줌
@@ -400,6 +406,7 @@
                 <img src="https://osu.ppy.sh/images/favicon/android-chrome-192x192.png" alt="Logo" width="32">
                 <span class="align-middle">osu mania 리듬게임</span>
             </div>
+
             <div class="col-4 d-flex align-items-center">
                 <div class="btn-group me-1">
                     <button type="button" class="btn btn-outline-warning py-1 px-2 fs-5" onclick="bgm.play();">
@@ -417,11 +424,14 @@
                         초/전체 초</div>
                 </div>
             </div>
+
             <div class="col-2">
                 <input id="songSearch" class="form-control" type="text" placeholder="곡 검색하기">
             </div>
+
             <div class="col-4 d-flex justify-content-end">
-                <button type="button" class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#myModal">도움말</button>
+                <button type="button" class="btn btn-primary me-2" data-bs-toggle="modal"
+                    data-bs-target="#myModal">도움말</button>
                 <!-- The Modal -->
                 <div class="modal fade" id="myModal">
                     <div class="modal-dialog">
@@ -447,7 +457,29 @@
                         </div>
                     </div>
                 </div>
-                <button type="button" class="btn btn-primary me-2">로그인</button>
+
+                <button type="button" class="btn btn-primary me-2" data-bs-toggle="offcanvas"
+                    data-bs-target="#addSongOffcanvas" aria-controls="addSongOffcanvas">곡 추가</button>
+                <div class="offcanvas offcanvas-end" tabindex="-1" id="addSongOffcanvas"
+                    aria-labelledby="addSongOffcanvasLabel">
+                    <div class="offcanvas-header">
+                        <h5 class="offcanvas-title" id="addSongOffcanvasLabel">곡 추가하기</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+                    </div>
+                    <div class="offcanvas-body">
+                        <!--설명-->
+                        <p>방법:</p>
+                        <p>
+                            <a href="https://nerinyan.moe/main?m=3&s=ranked" target="_blank">이 사이트</a>
+                            에 들어가서 (랭크된 노래들 중에서) 원하는 노래를 고른다.  
+                        </p>
+                        <p>곡의 왼쪽 아래를 보면 "Copy download URL"버튼이 있다. 이 버튼을 누른다.</p>
+                        <p>아래의 입력칸에 붙여넣기로 링크를 넣는다. 그리고 곡 추가 버튼을 누른다.</p>
+                        <input id="addSongInput" class="form-control my-2" type="text" placeholder="링크를 입력하세요">
+                        <button class="btn btn-primary" onclick="addSong()">곡 추가하기</button>
+                    </div>
+                </div>
+
                 <button type="button" class="btn btn-primary me-2" data-bs-toggle="offcanvas"
                     data-bs-target="#offcanvasExample" aria-controls="offcanvasExample">설정</button>
                 <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasExample"

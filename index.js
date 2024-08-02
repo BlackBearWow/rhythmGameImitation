@@ -37,12 +37,6 @@ app.get('/', (req, res) => {
     res.render('index');
 });
 
-// app.get('/getSongListDataByName/:name', (req, res) => {
-//     const name = req.params.name;
-//     const songListData = fs.readdirSync(`./songs/${name}`);
-//     res.send(songListData.filter((val) => val.endsWith('.osu')));
-// });
-
 app.get('/playRhythmGame/:songId/:bitmapId', (req, res) => {
     res.render('playRhythmGame');
 });

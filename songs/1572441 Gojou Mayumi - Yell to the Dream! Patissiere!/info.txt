@@ -1,5 +1,0 @@
-{
-	"bg":"1280.jpeg",
-	"Audio":"yume.mp3",
-	"youtubeId":"LDAXGUvbg5k"
-}

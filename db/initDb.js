@@ -1,6 +1,7 @@
 const DB = require("./DB");
+const AO = require("../analyzeOsu");
 const fs = require('node:fs');
-const { getAudioDurationInSeconds } = require('get-audio-duration')
+const { getAudioDurationInSeconds } = require('get-audio-duration');
 
 function getDuration(path) {
     return new Promise(function (resolve, reject) {
@@ -24,11 +25,11 @@ async function main() {
             'CREATE TABLE IF NOT EXISTS songs ( '
             + 'id INT NOT NULL AUTO_INCREMENT, '
             + 'songName VARCHAR(200) NOT NULL, '
-            + 'bg VARCHAR(50) NOT NULL, '
-            + 'Audio VARCHAR(50) NOT NULL, '
+            + 'backgroundImage VARCHAR(50) NOT NULL, '
+            + 'AudioFilename VARCHAR(50) NOT NULL, '
             + 'duration INT NOT NULL, '
-            + 'tags VARCHAR(100), '
-            + 'youtubeId VARCHAR(20), '
+            + 'Tags VARCHAR(1000), '
+            + 'youtubeVideoId VARCHAR(20), '
             + 'PRIMARY KEY(id)'
             + ');'
             , false);
@@ -53,81 +54,62 @@ async function main() {
         for (let songName of songList) {
             // 곡이 db에 있는지 확인.
             let [rows] = await DB.queryPromise(`select * from songs where songName = "${songName}"`);
-            // 곡이 이미 db에 있다면 기존 정보와 비교해 다른 점이 있으면 업데이트 한다.
-            // 구지 비교를 해야하나? 음... 비교하는 시간과 새로 넣는 시간이 비슷하지 않을까?
-            // 내가 컴퓨터에서 곡을 넣지 않고 웹에서만 한다면 이 기능이 필요하지는 않다. 하지만 이 기능은 필요함.
-            // 나중에 넣어도 되긴 함.
-            // 태그 기능도 info에 넣어두자.
-            if (rows.length != 0) {
-
-            }
             // 곡이 db에 없다면 새로 정보 저장
-            else {
-                //info.txt에서 정보를 읽어 db에 저장
-                if (fs.existsSync(`../songs/${songName}/info.txt`)) {
-                    let info = fs.readFileSync(`../songs/${songName}/info.txt`, { encoding: 'utf8' });
-                    info = JSON.parse(info);
-                    // 곡 지속시간 얻기
-                    const duration = await getDuration(`../songs/${songName}/${info.Audio}`);
-                    if (info.youtubeId)
-                        await DB.queryPromise(`INSERT INTO songs (songName, bg, Audio, duration, youtubeId) VALUES ("${songName}", "${info.bg}", "${info.Audio}", "${duration}", "${info.youtubeId}")`, false);
-                    else
-                        await DB.queryPromise(`INSERT INTO songs (songName, bg, Audio, duration) VALUES ("${songName}", "${info.bg}", "${info.Audio}", "${duration}")`, false);
-                    if (info.tags)
-                        await DB.queryPromise(`UPDATE songs SET tags = "${info.tags}" WHERE songName = "${songName}"`);
-
-                    //곡마다 비트맵 추가
-                    let songListData = fs.readdirSync(`../songs/${songName}`);
-                    songListData = songListData.filter((val) => val.endsWith('.osu'));
-                    for (let beatmapName of songListData) {
-                        let beatmapFile = fs.readFileSync(`../songs/${songName}/${beatmapName}`, { encoding: 'utf8' });
-                        // general의 mode가 3이 아니면 고려하지 않음. 3만 매니아모드이다.
-                        let General = beatmapFile.match(/(?<=\[General\])([\s\S]*?)(?=\[Editor\]|\[Metadata\]|\[Difficulty\]|\[Events\]|\[TimingPoints\]|\[Colours\]|\[HitObjects\])/);
-                        General = General[0].trim();
-                        let temp = {};
-                        General.split('\n').forEach((val, index) => {
-                            temp[val.split(':')[0].trim()] = val.split(':')[1].trim();
-                        })
-                        General = temp;
-                        if (General.Mode != 3)
-                            continue;
-                        // osu!mania에서 circlesize는 키 개수를 의미한다. 키 개수를 구함.
-                        let Difficulty = beatmapFile.match(/(?<=\[Difficulty\])([\s\S]*?)(?=\[Events\]|\[TimingPoints\]|\[Colours\]|\[HitObjects\])/);
-                        Difficulty = Difficulty[0].trim();
-                        temp = {};
-                        Difficulty.split('\n').forEach((val, index) => {
-                            temp[val.split(':')[0].trim()] = val.split(':')[1].trim();
-                        })
-                        Difficulty = temp;
-                        let keySize = Difficulty.CircleSize;
-                        // 비트맵마다 level 계산: hitobject수/duration 소수점 2째 자리까지
-                        let HitObjects = beatmapFile.match(/(?<=\[HitObjects\])([\s\S]*)/);
-                        HitObjects = HitObjects[0].trim();
-                        const level = (HitObjects.match(/\n/g).length / duration).toFixed(2);
-                        // 키 개수와 HitObjects의 종류 개수가 일치하는지 확인한다.
-                        temp = {};
-                        HitObjects.split('\n').forEach((val, index) => {
-                            if (!temp[val.split(',')[0]])
-                                temp[val.split(',')[0]] = [];
-                            if (/[0-9]+:[0-9]+:[0-9]+:[0-9]+:[0-9]+:/.test(val.split(',')[5])) {
-                                //hold 타입
-                                temp[val.split(',')[0]].push([val.split(',')[2], val.split(',')[5].match(/[^:]+/)[0]]);
-                            }
-                            else {
-                                //normal 타입
-                                temp[val.split(',')[0]].push([val.split(',')[2], 0]);
-                            }
-                        })
-                        if (Object.keys(temp).length != keySize) {
-                            console.log(`${Object.keys(temp).length}와 ${keySize}가 일치하지 않습니다.`);
-                            continue;
-                        }
-                        // db에 삽입
-                        await DB.queryPromise(`INSERT INTO beatmap (songId, beatmapName, level, keySize) VALUES ((select id from songs where songName = "${songName}"), "${beatmapName}", ${level}, ${keySize})`, false);
-                    }
+            if (rows.length == 0) {
+                // 해당 디렉토리의 첫번째 .osu파일을 읽어
+                const fileList = fs.readdirSync(`../songs/${songName}`);
+                const firstOsuFile = fileList.find((val) => val.endsWith(".osu"));
+                let firstOsuFileData = fs.readFileSync(`../songs/${songName}/${firstOsuFile}`, { encoding: 'utf8' });
+                // AudioFilename, backgroundImage, duration, Tags를 알아냄.
+                firstOsuFileData = AO.analyseOsuData(firstOsuFileData);
+                const AudioFilename = firstOsuFileData.General.AudioFilename;
+                const duration = await getDuration(`../songs/${songName}/${AudioFilename}`);
+                let backgroundImage;
+                if (typeof (firstOsuFileData.Events['Background and Video events']) == "string") {
+                    backgroundImage = firstOsuFileData.Events['Background and Video events'].match(/(?<=")[^"]+/)[0];
                 }
                 else {
-                    console.error(`${songName}/info.txt가 존재하지 않습니다.`);
+                    if (firstOsuFileData.Events['Background and Video events'][0].startsWith("0,")) {
+                        //0번째 index가 배경이미지일경우
+                        backgroundImage = firstOsuFileData.Events['Background and Video events'][0].match(/(?<=")[^"]+/)[0];
+                    }
+                    else {
+                        //1번째 index가 배경이미지일경우
+                        backgroundImage = firstOsuFileData.Events['Background and Video events'][1].match(/(?<=")[^"]+/)[0];
+                    }
+                }
+                //최대 990글자
+                const Tags = firstOsuFileData.Metadata.Tags.substr(0, 990);
+                // youtubeVideoId.txt에서 youtubeVideoId를 알아냄.
+                let youtubeVideoId = "";
+                if (fs.existsSync(`../songs/${songName}/youtubeVideoId.txt`)) {
+                    youtubeVideoId = fs.readFileSync(`../songs/${songName}/youtubeVideoId.txt`, { encoding: 'utf8' });
+                }
+                // db에 insert한다.
+                await DB.queryPromise(`INSERT INTO songs (songName, backgroundImage, AudioFilename, duration, Tags, youtubeVideoId) VALUES ("${songName}", "${backgroundImage}", "${AudioFilename}", "${duration}", "${Tags}", "${youtubeVideoId}")`, false);
+                //곡마다 비트맵 추가
+                let songListData = fs.readdirSync(`../songs/${songName}`);
+                songListData = songListData.filter((val) => val.endsWith('.osu'));
+                for (let beatmapName of songListData) {
+                    let beatmapFileData = fs.readFileSync(`../songs/${songName}/${beatmapName}`, { encoding: 'utf8' });
+                    beatmapFileData = AO.analyseOsuData(beatmapFileData);
+                    // general의 mode가 3이 아니면 고려하지 않음. 3만 매니아모드이다.
+                    if (beatmapFileData.General.Mode != 3)
+                        continue;
+                    // osu!mania에서 circlesize는 키 개수를 의미한다. 키 개수를 구함.
+                    const keySize = beatmapFileData.Difficulty.CircleSize;
+                    // 비트맵마다 level 계산: hitobject수/duration 소수점 2째 자리까지
+                    // 쳐야하는 노트 개수 / 시간초로 계산했다.
+                    let HitObjectsCount = 0;
+                    Object.values(beatmapFileData.HitObjects).forEach((val)=>HitObjectsCount+=val.length);
+                    const level = (HitObjectsCount / duration).toFixed(2);
+                    // 키 개수와 HitObjects의 종류 개수가 일치하는지 확인한다.
+                    if (Object.keys(beatmapFileData.HitObjects).length != keySize) {
+                        console.log(`${Object.keys(beatmapFileData.HitObjects).length}와 ${keySize}가 일치하지 않습니다.`);
+                        continue;
+                    }
+                    // db에 삽입
+                    await DB.queryPromise(`INSERT INTO beatmap (songId, beatmapName, level, keySize) VALUES ((select id from songs where songName = "${songName}"), "${beatmapName}", ${level}, ${keySize})`, false);
                 }
             }
         }

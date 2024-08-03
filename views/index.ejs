@@ -22,9 +22,9 @@
         let songs;
         let allSongs;
         let songIndex = 0;
-        let bitmap;
-        let bitmapIndex = 0;
-        let songBitmapSize = 4;
+        let beatmap;
+        let beatmapIndex = 0;
+        let songBeatmapSize = 4;
         //음악재생 관련 변수들
         let bgm = {
             audio: new Audio(),
@@ -70,8 +70,8 @@
         }
         function playRhythmGame() {
             let songId = $(`#songIndex${songIndex}`).attr('data-songId');
-            let bitmapId = $(`#bitmapIndex${bitmapIndex}`).attr('data-bitmapId');
-            location.href = `/playRhythmGame/${songId}/${bitmapId}`;
+            let beatmapId = $(`#beatmapIndex${beatmapIndex}`).attr('data-beatmapId');
+            location.href = `/playRhythmGame/${songId}/${beatmapId}`;
         }
         function getAllSongs() {
             $.ajax({
@@ -97,13 +97,13 @@
                 db = event.target.result;
                 const songObjectStore = db.createObjectStore("songs", { keyPath: "id" });
                 songObjectStore.createIndex("songName", "songName", { unique: true });
-                const bitmapObjectStore = db.createObjectStore("bitmap", { keyPath: "id" });
-                bitmapObjectStore.createIndex("bitmapName", "bitmapName", { unique: true });
+                const beatmapObjectStore = db.createObjectStore("beatmap", { keyPath: "id" });
+                beatmapObjectStore.createIndex("beatmapName", "beatmapName", { unique: true });
                 const noteInfoObjectStore = db.createObjectStore("noteInfo", { keyPath: "path" });
             }
             request.onsuccess = (event) => {
                 db = event.target.result;
-                const transaction = db.transaction(["songs", "bitmap"], "readwrite");
+                const transaction = db.transaction(["songs", "beatmap"], "readwrite");
                 const songObjectStore = transaction.objectStore("songs");
                 songObjectStore.clear();
                 data.songs.forEach((song) => {
@@ -112,12 +112,12 @@
                         console.log(`song 데이터 넣기 에러`);
                     }
                 })
-                const bitmapObjectStore = transaction.objectStore("bitmap");
-                bitmapObjectStore.clear();
-                data.bitmap.forEach((val) => {
-                    const request = bitmapObjectStore.add(val);
+                const beatmapObjectStore = transaction.objectStore("beatmap");
+                beatmapObjectStore.clear();
+                data.beatmap.forEach((val) => {
+                    const request = beatmapObjectStore.add(val);
                     request.onerror = (event) => {
-                        console.log(`bitmap 데이터 넣기 에러`);
+                        console.log(`beatmap 데이터 넣기 에러`);
                     }
                 })
                 alert("전체 곡 가져오기 / 최신화를 하였습니다");
@@ -134,15 +134,15 @@
                 db = event.target.result;
                 const songObjectStore = db.createObjectStore("songs", { keyPath: "id" });
                 songObjectStore.createIndex("songName", "songName", { unique: true });
-                const bitmapObjectStore = db.createObjectStore("bitmap", { keyPath: "id" });
-                bitmapObjectStore.createIndex("bitmapName", "bitmapName", { unique: true });
+                const beatmapObjectStore = db.createObjectStore("beatmap", { keyPath: "id" });
+                beatmapObjectStore.createIndex("beatmapName", "beatmapName", { unique: true });
                 const noteInfoObjectStore = db.createObjectStore("noteInfo", { keyPath: "path" });
             }
             request.onsuccess = (event) => {
                 db = event.target.result;
-                const transaction = db.transaction(["songs", "bitmap"], "readonly");
+                const transaction = db.transaction(["songs", "beatmap"], "readonly");
                 const songObjectStore = transaction.objectStore("songs");
-                const bitmapObjectStore = transaction.objectStore("bitmap");
+                const beatmapObjectStore = transaction.objectStore("beatmap");
                 songs = songObjectStore.getAll();
                 songs.onsuccess = (event) => {
                     if (event.target.result.length == 0) {
@@ -153,10 +153,10 @@
                     songs = allSongs;
                     listSongList();
                 }
-                bitmap = bitmapObjectStore.getAll();
-                bitmap.onsuccess = (event) => {
-                    bitmap = event.target.result;
-                    listBitmapKeySizeAndLevel(0);
+                beatmap = beatmapObjectStore.getAll();
+                beatmap.onsuccess = (event) => {
+                    beatmap = event.target.result;
+                    listBeatmapKeySizeAndLevel(0);
                 }
             };
         }
@@ -208,27 +208,27 @@
                 $("#songTag").text(`태그:${songs[songIndex].tags}`);
             }
         }
-        function listBitmapKeySizeAndLevel(songIndex) {
+        function listBeatmapKeySizeAndLevel(songIndex) {
             // 비트맵들을 키 사이즈와 난이도를 화면에 리스트로 넣는다.
-            bitmapIndex = 0;
-            $("#bitmapLists").empty();
+            beatmapIndex = 0;
+            $("#beatmapLists").empty();
             //song이 없다면 리턴
             if (songs.length == 0)
                 return;
 
-            let filteredBitmap = bitmap.filter((b) => {
+            let filteredBeatmap = beatmap.filter((b) => {
                 //수정요망.
                 return b.songId == $(`#songIndex${songIndex}`).attr('data-songId');
             })
-            filteredBitmap.sort((a, b) => {
+            filteredBeatmap.sort((a, b) => {
                 return (a.keySize - b.keySize) || (a.level - b.level);
             })
-            songBitmapSize = filteredBitmap.length;
-            filteredBitmap.forEach((b, idx) => {
+            songBeatmapSize = filteredBeatmap.length;
+            filteredBeatmap.forEach((b, idx) => {
                 if (idx == 0)
-                    $("#bitmapLists").append(`<li class="list-group-item flex-fill selected" id="bitmapIndex${idx}" data-bitmapId="${b.id}">${b.keySize}키 ${b.level}</li>`);
+                    $("#beatmapLists").append(`<li class="list-group-item flex-fill selected" id="beatmapIndex${idx}" data-beatmapId="${b.id}">${b.keySize}키 ${b.level}</li>`);
                 else
-                    $("#bitmapLists").append(`<li class="list-group-item flex-fill" id="bitmapIndex${idx}" data-bitmapId="${b.id}">${b.keySize}키 ${b.level}</li>`);
+                    $("#beatmapLists").append(`<li class="list-group-item flex-fill" id="beatmapIndex${idx}" data-beatmapId="${b.id}">${b.keySize}키 ${b.level}</li>`);
             })
         }
         function changeNoteSpeed(val) {
@@ -255,12 +255,28 @@
                 })
             }
             listSongList();
-            listBitmapKeySizeAndLevel(0);
+            listBeatmapKeySizeAndLevel(0);
         }
         function addSong() {
             console.log("곡 추가 기능 만들기");
+            let url = $("#addSongInput").val();
             // regex로 링크가 이상한지 검사
+            if (url.search(/^https:\/\/api.nerinyan.moe\/d\/[0-9]+$/) == -1) {
+                alert("유효하지 않은 링크입니다.\n https://api.nerinyan.moe/d/숫자들 \n 형식으로 입력해주세요.");
+                return;
+            }
             // 링크가 안이상하면 서버에 전송
+            $.ajax({
+                url: `/addSong/${url.match(/[0-9]+/)[0]}`,
+                type: "get",
+                async: true,
+                success: function (data) {
+                    alert(data);
+                },
+                error: function (error) {
+                    console.log(error);
+                }
+            });
             // 서버에서 오류 또는 성공 응답 받기
         }
         //document가 로드되면.
@@ -320,7 +336,7 @@
                     if (songIndex == max)
                         return;
                     //비트맵 선택 인덱스 변경
-                    bitmapIndex = 0;
+                    beatmapIndex = 0;
                     //클래스 바꾸기.
                     $(`#songIndex${songIndex}`).removeClass("selected");
                     songIndex += 1;
@@ -338,7 +354,7 @@
                         </li>`)
                     }
                     songInfoChange(songIndex);
-                    listBitmapKeySizeAndLevel(songIndex);
+                    listBeatmapKeySizeAndLevel(songIndex);
                     if (songs.length > 0)
                         setTimeout(bgm.changeMusic, 800, songs[songIndex].songName);
                 }
@@ -348,7 +364,7 @@
                     if (songIndex == 0)
                         return;
                     //비트맵 선택 인덱스 변경
-                    bitmapIndex = 0;
+                    beatmapIndex = 0;
                     //클래스 바꾸기.
                     $(`#songIndex${songIndex}`).removeClass("selected");
                     songIndex -= 1;
@@ -366,28 +382,28 @@
                         </li>`)
                     }
                     songInfoChange(songIndex);
-                    listBitmapKeySizeAndLevel(songIndex);
+                    listBeatmapKeySizeAndLevel(songIndex);
                     if (songs.length > 0)
                         setTimeout(bgm.changeMusic, 800, songs[songIndex].songName);
                 }
                 //비트맵 선택 좌 우
                 else if (event.key == "ArrowLeft") {
                     //처음 비트맵이 선택되어있다면 아무것도 하지 않음.
-                    if (bitmapIndex == 0)
+                    if (beatmapIndex == 0)
                         return;
                     //클래스 바꾸기
-                    $(`#bitmapIndex${bitmapIndex}`).removeClass("selected");
-                    bitmapIndex -= 1;
-                    $(`#bitmapIndex${bitmapIndex}`).addClass("selected");
+                    $(`#beatmapIndex${beatmapIndex}`).removeClass("selected");
+                    beatmapIndex -= 1;
+                    $(`#beatmapIndex${beatmapIndex}`).addClass("selected");
                 }
                 else if (event.key == "ArrowRight") {
                     //마지막 비트맵이 선택되어있다면 아무것도 하지 않음.
-                    if (bitmapIndex == (songBitmapSize - 1))
+                    if (beatmapIndex == (songBeatmapSize - 1))
                         return;
                     //클래스 바꾸기
-                    $(`#bitmapIndex${bitmapIndex}`).removeClass("selected");
-                    bitmapIndex += 1;
-                    $(`#bitmapIndex${bitmapIndex}`).addClass("selected");
+                    $(`#beatmapIndex${beatmapIndex}`).removeClass("selected");
+                    beatmapIndex += 1;
+                    $(`#beatmapIndex${beatmapIndex}`).addClass("selected");
                 }
                 //엔터
                 else if (event.key == "Enter") {
@@ -471,7 +487,7 @@
                         <p>방법:</p>
                         <p>
                             <a href="https://nerinyan.moe/main?m=3&s=ranked" target="_blank">이 사이트</a>
-                            에 들어가서 (랭크된 노래들 중에서) 원하는 노래를 고른다.  
+                            에 들어가서 (랭크된 노래들 중에서) 원하는 노래를 고른다.
                         </p>
                         <p>곡의 왼쪽 아래를 보면 "Copy download URL"버튼이 있다. 이 버튼을 누른다.</p>
                         <p>아래의 입력칸에 붙여넣기로 링크를 넣는다. 그리고 곡 추가 버튼을 누른다.</p>
@@ -539,10 +555,10 @@
                         <li class="list-group-item" id="songDuration">곡 길이:</li>
                         <li class="list-group-item" id="songTag">태그:</li>
                     </ul>
-                    <ul class="list-group list-group-horizontal" id="bitmapLists">
-                        <li class="list-group-item flex-fill" data-bitmapId="1">4키 1.12난이도</li>
-                        <li class="list-group-item flex-fill" data-bitmapId="2">2.12</li>
-                        <li class="list-group-item flex-fill" data-bitmapId="3">3.12</li>
+                    <ul class="list-group list-group-horizontal" id="beatmapLists">
+                        <li class="list-group-item flex-fill" data-beatmapId="1">4키 1.12난이도</li>
+                        <li class="list-group-item flex-fill" data-beatmapId="2">2.12</li>
+                        <li class="list-group-item flex-fill" data-beatmapId="3">3.12</li>
                     </ul>
                 </div>
             </div>

@@ -114,7 +114,7 @@
 
         function getFileData() {
             const songId = window.location.pathname.split('/')[2];
-            const bitmapId = window.location.pathname.split('/')[3];
+            const beatmapId = window.location.pathname.split('/')[3];
             //songId와 id에 해당하는 비트맵 노트정보가 있는지 확인. 없다면 서버에서 요청해서 받아온다.
             const request = indexedDB.open("rhythm");
             let db;
@@ -125,15 +125,15 @@
                 db = event.target.result;
                 const songObjectStore = db.createObjectStore("songs", { keyPath: "id" });
                 songObjectStore.createIndex("songName", "songName", { unique: true });
-                const bitmapObjectStore = db.createObjectStore("bitmap", { keyPath: "id" });
-                bitmapObjectStore.createIndex("bitmapName", "bitmapName", { unique: true });
+                const beatmapObjectStore = db.createObjectStore("beatmap", { keyPath: "id" });
+                beatmapObjectStore.createIndex("beatmapName", "beatmapName", { unique: true });
                 const noteInfoObjectStore = db.createObjectStore("noteInfo", { keyPath: "path" });
             }
             request.onsuccess = (event) => {
                 db = event.target.result;
-                const transaction = db.transaction(["songs", "bitmap", "noteInfo"], "readwrite");
+                const transaction = db.transaction(["songs", "beatmap", "noteInfo"], "readwrite");
                 const songObjectStore = transaction.objectStore("songs");
-                const bitmapObjectStore = transaction.objectStore("bitmap");
+                const beatmapObjectStore = transaction.objectStore("beatmap");
                 const noteInfoObjectStore = transaction.objectStore("noteInfo");
                 const song = songObjectStore.get(Number(songId));
                 song.onsuccess = (event) => {
@@ -144,9 +144,9 @@
                     }
                     songName = event.target.result.songName;
                     youtubeVideoId = event.target.result.youtubeId;
-                    const bitmap = bitmapObjectStore.get(Number(bitmapId));
-                    bitmap.onsuccess = (event) => {
-                        fileName = event.target.result.bitmapName;
+                    const beatmap = beatmapObjectStore.get(Number(beatmapId));
+                    beatmap.onsuccess = (event) => {
+                        fileName = event.target.result.beatmapName;
                         const noteInfo = noteInfoObjectStore.get(`${songName}/${fileName}`);
                         noteInfo.onsuccess = (event) => {
                             //noteInfo에 해당 데이터가 없으면 서버에서 요청하고 data를 noteInfo에 추가.
@@ -267,11 +267,11 @@
         function setBackGround() {
             //Background and Video events가 배열이라면 배경과 영상이 배열에 담겨있고, 배열이 아니라면 배경이다.
             if (typeof (Events['Background and Video events']) == "string") {
-                $('#mainDiv').append(`<img src="/songs/${songName}/${Events['Background and Video events'].match(/(?<=")[^"]+/)[0]}" style="width: 100%;position: absolute;object-fit: cover;z-index:-1">`)
+                $('#mainDiv').append(`<img src="/songs/${songName}/${Events['Background and Video events'].match(/(?<=")[^"]+/)[0]}" style="width: 100%;position: absolute;object-fit: cover;z-index:-1">`);
             }
             //info.txt를 만들며 해당 코드는 사용하지 않는다.
             else {
-                if (youtubeVideoId == "") {
+                if (!youtubeVideoId) {
                     if (Events['Background and Video events'][0].startsWith("0,")) {
                         //0번째 index가 배경이미지일경우
                         $('#mainDiv').append(`<img src="/songs/${songName}/${Events['Background and Video events'][0].match(/(?<=")[^"]+/)[0]}" style="width: 100%;position: absolute;object-fit: cover;z-index:-1">`)

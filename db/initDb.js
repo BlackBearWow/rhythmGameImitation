@@ -33,12 +33,12 @@ async function main() {
             + ');'
             , false);
 
-        // bitmap table이 있는지 확인. 없다면 생성
+        // beatmap table이 있는지 확인. 없다면 생성
         await DB.queryPromise(
-            'CREATE TABLE IF NOT EXISTS bitmap ( '
+            'CREATE TABLE IF NOT EXISTS beatmap ( '
             + 'id INT NOT NULL AUTO_INCREMENT, '
             + 'songId INT NOT NULL, '
-            + 'bitmapName VARCHAR(200) NOT NULL, '
+            + 'beatmapName VARCHAR(200) NOT NULL, '
             + 'level FLOAT NOT NULL, '
             + 'keySize INT NOT NULL, '
             + 'PRIMARY KEY(id)'
@@ -79,10 +79,10 @@ async function main() {
                     //곡마다 비트맵 추가
                     let songListData = fs.readdirSync(`../songs/${songName}`);
                     songListData = songListData.filter((val) => val.endsWith('.osu'));
-                    for (let bitmapName of songListData) {
-                        let bitmapFile = fs.readFileSync(`../songs/${songName}/${bitmapName}`, { encoding: 'utf8' });
+                    for (let beatmapName of songListData) {
+                        let beatmapFile = fs.readFileSync(`../songs/${songName}/${beatmapName}`, { encoding: 'utf8' });
                         // general의 mode가 3이 아니면 고려하지 않음. 3만 매니아모드이다.
-                        let General = bitmapFile.match(/(?<=\[General\])([\s\S]*?)(?=\[Editor\]|\[Metadata\]|\[Difficulty\]|\[Events\]|\[TimingPoints\]|\[Colours\]|\[HitObjects\])/);
+                        let General = beatmapFile.match(/(?<=\[General\])([\s\S]*?)(?=\[Editor\]|\[Metadata\]|\[Difficulty\]|\[Events\]|\[TimingPoints\]|\[Colours\]|\[HitObjects\])/);
                         General = General[0].trim();
                         let temp = {};
                         General.split('\n').forEach((val, index) => {
@@ -92,7 +92,7 @@ async function main() {
                         if (General.Mode != 3)
                             continue;
                         // osu!mania에서 circlesize는 키 개수를 의미한다. 키 개수를 구함.
-                        let Difficulty = bitmapFile.match(/(?<=\[Difficulty\])([\s\S]*?)(?=\[Events\]|\[TimingPoints\]|\[Colours\]|\[HitObjects\])/);
+                        let Difficulty = beatmapFile.match(/(?<=\[Difficulty\])([\s\S]*?)(?=\[Events\]|\[TimingPoints\]|\[Colours\]|\[HitObjects\])/);
                         Difficulty = Difficulty[0].trim();
                         temp = {};
                         Difficulty.split('\n').forEach((val, index) => {
@@ -101,7 +101,7 @@ async function main() {
                         Difficulty = temp;
                         let keySize = Difficulty.CircleSize;
                         // 비트맵마다 level 계산: hitobject수/duration 소수점 2째 자리까지
-                        let HitObjects = bitmapFile.match(/(?<=\[HitObjects\])([\s\S]*)/);
+                        let HitObjects = beatmapFile.match(/(?<=\[HitObjects\])([\s\S]*)/);
                         HitObjects = HitObjects[0].trim();
                         const level = (HitObjects.match(/\n/g).length / duration).toFixed(2);
                         // 키 개수와 HitObjects의 종류 개수가 일치하는지 확인한다.
@@ -123,7 +123,7 @@ async function main() {
                             continue;
                         }
                         // db에 삽입
-                        await DB.queryPromise(`INSERT INTO bitmap (songId, bitmapName, level, keySize) VALUES ((select id from songs where songName = "${songName}"), "${bitmapName}", ${level}, ${keySize})`, false);
+                        await DB.queryPromise(`INSERT INTO beatmap (songId, beatmapName, level, keySize) VALUES ((select id from songs where songName = "${songName}"), "${beatmapName}", ${level}, ${keySize})`, false);
                     }
                 }
                 else {

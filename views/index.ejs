@@ -50,6 +50,11 @@
                 bgm.audio.volume = val / 100;
             },
             changeMusic: function (beforeSongName) {
+                //현재 검색결과가 없다면 재생 멈춤.
+                if (songs.length == 0) {
+                    bgm.audio.stop();
+                    return;
+                }
                 //현재 검색결과가 없거나 다른 노래로 바뀌었다면 노래재생 안함.
                 if ((songs.length == 0) || (!beforeSongName))
                     return;
@@ -61,7 +66,14 @@
                 bgm.updateMusicProgress(songs[songIndex].songName);
             },
             updateMusicProgress: function (beforeSongName) {
-                if (bgm.audio.paused || (beforeSongName != songs[songIndex].songName))
+                // 곡이 멈췄을 때
+                if (bgm.audio.paused)
+                    return;
+                // 검색으로 인해 아무런 곡이 없을 때
+                if (songs.length == 0)
+                    return;
+                // 곡이 바뀌었을 때
+                if (beforeSongName != songs[songIndex].songName)
                     return;
                 $("#progressBar").text(`${parseInt(bgm.audio.currentTime)}/${parseInt(bgm.audio.duration)}`);
                 $("#progressBar").width(`${100 * bgm.audio.currentTime / bgm.audio.duration}%`);
@@ -197,6 +209,7 @@
                 $("#madeBy").text(`곡 검색 결과가 없습니다.`);
                 $("#infoSongName").text(`곡 검색 결과가 없습니다.`);
                 $("#songDuration").text(`곡 검색 결과가 없습니다.`);
+                $("#youtubeVideoId").text(`곡 검색 결과가 없습니다.`);
                 $("#songTag").text(`곡 검색 결과가 없습니다.`);
             }
             else {
@@ -205,7 +218,8 @@
                 $("#madeBy").text(`작곡가 or 만든이: ${songs[songIndex].songName.match(/[^0-9-]+/)[0]}`);
                 $("#infoSongName").text(`제목: ${songs[songIndex].songName.match(/(?<=-)[\s\S]+/)[0]}`);
                 $("#songDuration").text(`곡 길이: ${parseInt(songs[songIndex].duration / 60)}분${songs[songIndex].duration % 60}초 (${songs[songIndex].duration}초)`);
-                $("#songTag").text(`태그:${songs[songIndex].Tags}`);
+                $("#youtubeVideoId").text(`유튜브videoId: ${songs[songIndex].youtubeVideoId}`);
+                $("#songTag").text(`태그: ${songs[songIndex].Tags}`);
             }
         }
         function listBeatmapKeySizeAndLevel(songIndex) {
@@ -244,18 +258,34 @@
             localStorage.setItem("volume", val);
             bgm.setVolume(val);
         }
-        function filterSongsBySongName(val) {
+        function filterSongsBySearch(val) {
             //allSongs에서 songs로 검색어를 이용해 곡들을 필터한다.
             if (val == "") {
                 songs = allSongs;
             }
             else {
+                // 띄어쓰기가 아닌 단어들로 나눈다.
+                words = val.match(/[\S]+/g);
+                // songName과 Tags중에 단어가 포함되면 결과에 포함시킨다.
                 songs = allSongs.filter((s) => {
-                    return s.songName.toLowerCase().includes(val.toLowerCase());
+                    let tags = s.Tags.match(/[\S]+/g);
+                    for (let i = 0; i < words.length; i++) {
+                        if (s.songName.toLowerCase().includes(words[i].toLowerCase()))
+                            return true;
+                        for (let j = 0; j < tags.length; j++) {
+                            if (tags[j].toLowerCase().includes(words[i].toLowerCase()))
+                                return true;
+                        }
+                    }
+                    return false;
                 })
             }
             listSongList();
             listBeatmapKeySizeAndLevel(0);
+            if (songs.length > 0)
+                setTimeout(bgm.changeMusic, 800, songs[songIndex].songName);
+            else
+                bgm.stop();
         }
         function addSong() {
             console.log("곡 추가 기능 만들기");
@@ -283,7 +313,6 @@
         $(function () {
             //indexedDB에서 곡들을 보여줌
             showAllLists();
-
             //설정창에 필요한것들
             let noteSpeed = localStorage.getItem("noteSpeed");
             let canvasOpacity = localStorage.getItem("canvasOpacity");
@@ -321,7 +350,7 @@
                     $("#songSearch").blur();
                 }
                 else
-                    filterSongsBySongName(event.target.value);
+                    filterSongsBySearch(event.target.value);
             });
             //키보드 이벤트 리스너 등록.
             $(document).on('keydown', function (event) {
@@ -463,7 +492,7 @@
                                 <p>곡 선택: 방향키 위 아래</p>
                                 <p>난이도 선택: 방향키 왼쪽 오른쪽</p>
                                 <p>플레이: 엔터</p>
-                                <p>곡 검색하는법: osu숫자 또는 작곡가 또는 제목을 검색창에 입력</p>
+                                <p>곡 검색하는법: osu숫자 or 작곡가 or 제목 or 태그를 검색창에 입력</p>
                                 <p>4키: dfjk</p>
                                 <p>5키: df jk</p>
                                 <p>6키: sdfjkl</p>
@@ -486,7 +515,8 @@
                         <!--설명-->
                         <p>방법:</p>
                         <p>
-                            <a href="https://nerinyan.moe/main?m=3&s=ranked" target="_blank">이 사이트</a>
+                            <a href="https://nerinyan.moe/main?m=3&s=ranked&sort=plays_desc&q=" target="_blank">이
+                                사이트</a>
                             에 들어가서 (랭크된 노래들 중에서) 원하는 노래를 고른다.
                         </p>
                         <p>곡의 왼쪽 아래를 보면 "Copy download URL"버튼이 있다. 이 버튼을 누른다.</p>
@@ -546,13 +576,14 @@
                     <div class="card-header">
                         <h1>곡정보 & 난이도 선택</h1>
                     </div>
-                    <img style="width:100%; height:550px; object-fit: cover;" class="card-img-top"
+                    <img style="width:100%; height:530px; object-fit: cover;" class="card-img-top"
                         src="/songs/120289 Dj Mashiro - Prismatic Lollipops/37945384.png" id="bigImg">
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item" id="osuNum">osu숫자:</li>
                         <li class="list-group-item" id="madeBy">만든이:</li>
                         <li class="list-group-item" id="infoSongName">제목:</li>
                         <li class="list-group-item" id="songDuration">곡 길이:</li>
+                        <li class="list-group-item" id="youtubeVideoId">유튜브videoId:</li>
                         <li class="list-group-item" id="songTag">태그:</li>
                     </ul>
                     <ul class="list-group list-group-horizontal" id="beatmapLists">

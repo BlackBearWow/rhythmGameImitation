@@ -1,5 +1,0 @@
-{
-	"bg":"BG.jpg",
-	"Audio":"Camellia - Bangin' Burst [EXH].mp3",
-	"youtubeId":""
-}

@@ -1,5 +1,0 @@
-{
-	"bg":"Doraemon.jpg",
-	"Audio":"audio.mp3",
-	"youtubeId":"kfKI6rbkQZo"
-}

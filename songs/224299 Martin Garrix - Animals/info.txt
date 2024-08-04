@@ -1,5 +1,0 @@
-{
-	"bg":"maxresdefault.jpg",
-	"Audio":"Martin Garrix - Animals.mp3",
-	"youtubeId":""
-}

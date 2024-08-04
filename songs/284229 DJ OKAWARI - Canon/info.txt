@@ -1,5 +1,0 @@
-{
-	"bg":"Canon-BG.jpg",
-	"Audio":"DJ Okawari - Canon.mp3",
-	"youtubeId":""
-}

@@ -1,5 +1,0 @@
-{
-	"bg":"lincoln.jpg",
-	"Audio":"1337.mp3",
-	"youtubeId":""
-}

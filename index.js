@@ -155,7 +155,7 @@ app.get('/addSong/:num', (req, res) => {
                     // db에 삽입
                     await DB.queryPromise(`INSERT INTO beatmap (songId, beatmapName, level, keySize) VALUES ((select id from songs where songName = "${songName}"), "${beatmapName}", ${level}, ${keySize})`, false);
                 }
-                res.send("다운로드 성공");
+                res.send(`${songName} 다운로드&적용 성공. 곡 가져오기/최신화를 해주세요`);
             });
             writer.on('error', err => {
                 res.send("다운로드를 실패했습니다.");

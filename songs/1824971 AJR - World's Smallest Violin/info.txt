@@ -1,5 +1,0 @@
-{
-	"bg":"violin.jpg",
-	"Audio":"audio.mp3",
-	"youtubeId":"PEnJbjBuxnw"
-}

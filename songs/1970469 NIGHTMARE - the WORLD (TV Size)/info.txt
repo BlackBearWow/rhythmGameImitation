@@ -1,5 +1,0 @@
-{
-	"bg":"deth_not.png",
-	"Audio":"audio.ogg",
-	"youtubeId":"85nHGkC6HfA"
-}

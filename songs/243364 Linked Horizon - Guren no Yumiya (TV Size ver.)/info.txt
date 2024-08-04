@@ -1,5 +1,0 @@
-{
-	"bg":"BG.jpg",
-	"Audio":"Linked Horizon - Guren no Yumiya (TV Size).mp3",
-	"youtubeId":"kbu4B9Y9Ino"
-}

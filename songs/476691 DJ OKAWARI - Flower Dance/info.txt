@@ -1,5 +1,0 @@
-{
-	"bg":"BG.jpg",
-	"Audio":"Flower Dance.mp3",
-	"youtubeId":""
-}

@@ -1,5 +1,0 @@
-{
-	"bg":"wizard ryky.jpg",
-	"Audio":"audio.mp3",
-	"youtubeId":""
-}

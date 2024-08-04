@@ -311,8 +311,10 @@
         }
         function openYoutubeModal() {
             //songs가 없다면 리턴
-            if(songs.length == 0)
+            if(songs.length == 0) {
+                alert("선택된 곡이 없습니다").
                 return;
+            }
             $("#youtubeVideoIdInput").val(songs[songIndex].youtubeVideoId);
             $("#youtubeIframe").attr('src', `https://www.youtube.com/embed/${songs[songIndex].youtubeVideoId}`);
             console.log(songs[songIndex].youtubeVideoId);
@@ -321,7 +323,12 @@
             $("#youtubeIframe").attr('src', `https://www.youtube.com/embed/${$("#youtubeVideoIdInput").val()}`);
         }
         function applyYoutubeVideoId() {
-            // 링크가 안이상하면 서버에 전송
+            //songs가 없다면 리턴
+            if(songs.length == 0) {
+                alert("선택된 곡이 없습니다").
+                return;
+            }
+            // 서버에 전송
             $.ajax({
                 //songName
                 url: `/applyYoutubeVideoId/${songs[songIndex].songName}/${$("#youtubeVideoIdInput").val()}`,
@@ -590,7 +597,7 @@
                     </div>
                     <ul class="list-group list-group-flush" id="songLists">
                         <li class="list-group-item m-0 p-0">
-                            <img style="height:70px" src="/songs/120289 Dj Mashiro - Prismatic Lollipops/37945384.png">
+                            <img style="height:70px" src="https://img1.daumcdn.net/thumb/S56x56/?scode=mtistory2&fname=https%3A%2F%2Ftistory1.daumcdn.net%2Ftistory%2F4106079%2Fattach%2Fab2b0b1cc931435caf3e524b9f5ec7e0">
                             노래제목
                         </li>
                     </ul>
@@ -603,7 +610,7 @@
                         <h1>곡정보 & 난이도 선택</h1>
                     </div>
                     <img style="width:100%; height:530px; object-fit: cover;" class="card-img-top"
-                        src="/songs/120289 Dj Mashiro - Prismatic Lollipops/37945384.png" id="bigImg">
+                        src="https://img1.daumcdn.net/thumb/S56x56/?scode=mtistory2&fname=https%3A%2F%2Ftistory1.daumcdn.net%2Ftistory%2F4106079%2Fattach%2Fab2b0b1cc931435caf3e524b9f5ec7e0" id="bigImg">
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item" id="osuNum">osu숫자:</li>
                         <li class="list-group-item" id="madeBy">만든이:</li>
@@ -631,7 +638,7 @@
                                 </div>
                                 <!-- Modal body -->
                                 <div class="modal-body">
-                                    <iframe id="youtubeIframe" width="100%" height="315" src="https://www.youtube.com/embed/X9WE6RsS7Dc" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                                    <iframe id="youtubeIframe" width="100%" height="315" src="https://www.youtube.com/embed/_-PRI3MNc8s" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
                                     <input type="text", class="form-control" id="youtubeVideoIdInput" placeholder="youtubeVideoId를 입력해주세요" value="_-PRI3MNc8s">
                                     <p class="m-0">입력하거나 바꾸고싶은 youtubeVideoId를 입력해주세요.</p>
                                     <p class="m-0">youtube를 볼때, 링크를 보면</p>

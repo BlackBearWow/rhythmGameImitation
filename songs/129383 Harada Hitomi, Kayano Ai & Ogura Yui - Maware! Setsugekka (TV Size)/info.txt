@@ -1,5 +1,0 @@
-{
-	"bg":"BG.jpg",
-	"Audio":"ED.mp3",
-	"youtubeId":"RFVzZtjz3aA"
-}

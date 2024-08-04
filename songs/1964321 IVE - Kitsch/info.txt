@@ -1,5 +1,0 @@
-{
-	"bg":"I love wonyojng.jpg",
-	"Audio":"audio.mp3",
-	"youtubeId":"pG6iaOMV46I"
-}

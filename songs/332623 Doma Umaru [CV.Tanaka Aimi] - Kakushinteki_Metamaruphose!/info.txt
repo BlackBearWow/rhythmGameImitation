@@ -1,1 +1,0 @@
-{"Audio":"ratsyks.mp3","bg":"umaruchan1.jpg","youtubeId":""}

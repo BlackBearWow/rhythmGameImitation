@@ -14,11 +14,11 @@
         let can;        //canvas 객체
         let ctx;        //context객체를 얻어야 drawimage와 filltext를 할 수 있음
         let keyBoard = {
-            'a': { pressing: false, press: false }, 's': { pressing: false, press: false },
-            'd': { pressing: false, press: false }, 'f': { pressing: false, press: false },
-            ' ': { pressing: false, press: false },
-            'j': { pressing: false, press: false }, 'k': { pressing: false, press: false },
-            'l': { pressing: false, press: false }, ';': { pressing: false, press: false },
+            'a': { pressing: false, press: false, holdDelayTime: 0 }, 's': { pressing: false, press: false, holdDelayTime: 0 },
+            'd': { pressing: false, press: false, holdDelayTime: 0 }, 'f': { pressing: false, press: false, holdDelayTime: 0 },
+            ' ': { pressing: false, press: false, holdDelayTime: 0 },
+            'j': { pressing: false, press: false, holdDelayTime: 0 }, 'k': { pressing: false, press: false, holdDelayTime: 0 },
+            'l': { pressing: false, press: false, holdDelayTime: 0 }, ';': { pressing: false, press: false, holdDelayTime: 0 },
         };
         let volume = 1;
         //osu file format분석에 필요한 변수들
@@ -60,7 +60,7 @@
         let hitStatus = ''; //miss hit
         let hitFontSize = 60;
         // hit이펙트
-        let hitRadius; //배열로 
+        let hitEffectTime; //배열로 
         // 2. This code loads the IFrame Player API code asynchronously.
         let tag = document.createElement('script');
         tag.src = "https://www.youtube.com/iframe_api";
@@ -83,6 +83,8 @@
                     getFileData();
                     $("#can").keydown(function (e) {
                         if (e.key == 'a' | e.key == 's' | e.key == 'd' | e.key == 'f' | e.key == ' ' | e.key == 'j' | e.key == 'k' | e.key == 'l' | e.key == ';') {
+                            // holdDelayTime을 만든다. holdDelayTime은 처음 press되었을 때 parseInt(HitObjects[i][0][0])으로 초기화한다.
+                            // 그 이후 pressing 판정일 때 hit하면 +50한다. pressing판정은 flowTime이 holdDelayTime이상일 때 hit되는 판정으로 한다.
                             //처음 눌렀을때만 press가 true가 된다.
                             if (keyBoard[e.key]['pressing'] == false)
                                 keyBoard[e.key]['press'] = true;
@@ -105,7 +107,7 @@
                         $("#can").css("opacity", Number(localStorage.getItem("canvasOpacity")));
                     }
                     if (localStorage.getItem("volume")) {
-                        volume = localStorage.getItem("volume")/100;
+                        volume = localStorage.getItem("volume") / 100;
                     }
                     resolve();
                 })
@@ -156,7 +158,7 @@
                                     type: "get",
                                     async: false,
                                     success: function ({ data }) {
-                                        noteInfoObjectStore.add({path:`${songName}/${fileName}`, data});
+                                        noteInfoObjectStore.add({ path: `${songName}/${fileName}`, data });
                                         analyseFileData(data);
                                         initialize();
                                     },
@@ -241,7 +243,7 @@
                 if (!((keySize == 4) || (keySize == 5) || (keySize == 6) || (keySize == 7) || (keySize == 8))) {
                     alertAndHistoryBack('4 5 6 7 8키만 지원합니다');
                 }
-                hitRadius = new Array(parseInt(keySize)).fill(0);
+                hitEffectTime = new Array(parseInt(keySize)).fill(0);
                 width = keySize * oneWidth;
                 can.width = width;
                 $('#gameScoreDiv').css('left', 200 + width);
@@ -383,7 +385,7 @@
                     },
                     events: {
                         'onReady': onPlayerReady,
-                        'onError': function(event){
+                        'onError': function (event) {
                             console.log(`youtube error: ${event.data}`);
                         }
                     }
@@ -402,7 +404,7 @@
                 startTime = new Date().getTime();
                 //startTime += parseInt(General['AudioLeadIn']);
                 startTime += 2000;
-                if(youtubeVideoId) {
+                if (youtubeVideoId) {
                     player.mute();
                     player.playVideo();
                     player.pauseVideo();
@@ -444,36 +446,41 @@
                         if (keyBoard[alpha]['press']) {
                             const timeGap = parseInt(HitObjects[i][0][0]) - flowTime;
                             if (timeGap <= timeCutLine) {
-                                if (Math.abs(timeGap) <= (timeCutLine / 3)) hitMiss(300);
-                                else if (Math.abs(timeGap) <= (timeCutLine * 2 / 3)) hitMiss(200);
-                                else hitMiss(100);
+                                if (Math.abs(timeGap) <= (timeCutLine / 3)) hitMiss(300, i);
+                                else if (Math.abs(timeGap) <= (timeCutLine * 2 / 3)) hitMiss(200, i);
+                                else hitMiss(100, i);
                                 HitObjects[i].shift();
                                 hitSound.currentTime = 0; hitSound.play();
-                                hitRadius[i] = 20;
                             }
                             keyBoard[alpha]['press'] = false;
                         }
                     }
                     else {  //hold 노트라면
                         if (keyBoard[alpha]['press']) {
+                            // 첫 press때, holdDelayTime을 HitObjects[i][0][0]와 동기화한다.
                             const timeGap = parseInt(HitObjects[i][0][0]) - flowTime;
                             if (timeGap <= timeCutLine) {
-                                if (Math.abs(timeGap) <= (timeCutLine / 3)) hitMiss(300);
-                                else if (Math.abs(timeGap) <= (timeCutLine * 2 / 3)) hitMiss(200);
-                                else hitMiss(100);
+                                if (Math.abs(timeGap) <= (timeCutLine / 3)) hitMiss(300, i);
+                                else if (Math.abs(timeGap) <= (timeCutLine * 2 / 3)) hitMiss(200, i);
+                                else hitMiss(100, i);
                                 hitSound.currentTime = 0; hitSound.play();
-                                hitRadius[i] = 20;
+                                keyBoard[alpha]['holdDelayTime'] = parseInt(HitObjects[i][0][0]);
                             }
                             keyBoard[alpha]['press'] = false;
                         }
-                        else if (keyBoard[alpha]['pressing']) {
-                            const timeGap1 = parseInt(HitObjects[i][0][0]) - flowTime;
-                            const timeGap2 = flowTime - parseInt(HitObjects[i][0][1]);
-                            if ((timeGap1 <= timeCutLine) && (timeGap2 <= timeCutLine)) {
-                                hitMiss(300);
-                                hitRadius[i] = 20;
+                        // 첫 press가 hold노트 안에서 누른다면 pressing도 계산해야되서 else if가 아닌 if이다.
+                        if (keyBoard[alpha]['pressing']) {
+                            //hold노트 안에서 누를경우
+                            if ((parseInt(HitObjects[i][0][0]) <= flowTime) && (flowTime <= parseInt(HitObjects[i][0][1]))) {
+                                // flowTime이 holdDelayTime이상일 경우
+                                if (flowTime >= keyBoard[alpha]['holdDelayTime']) {
+                                    hitMiss(300, i);
+                                    // 1초에 20번까지 hit된다.
+                                    keyBoard[alpha]['holdDelayTime'] += 50;
+                                }
                             }
                         }
+                        // 키를 땐 상태일 때 끝이 커트라인 안이라면 정상적으로 노트 삭제.
                         else {
                             if (Math.abs(flowTime - parseInt(HitObjects[i][0][1])) <= timeCutLine) {
                                 HitObjects[i].shift();
@@ -489,22 +496,21 @@
                 const alpha = indexToAlphabet[i];
                 if (HitObjects[i].length != 0) {
                     if (HitObjects[i][0][1] == 0) { //단일 노트라면
-                        const timeGap = parseInt(HitObjects[i][0][0]) - flowTime;
-                        if (timeGap <= -timeCutLine) {
+                        //흘러간 시간이 (쳐야될 시간+커트라인)보다 크다면 miss
+                        if ((parseInt(HitObjects[i][0][0]) + timeCutLine) <= flowTime) {
                             HitObjects[i].shift();
                             hitMiss('miss');
                         }
                     }
                     else {  //hold 노트라면
-                        const timeGap = parseInt(HitObjects[i][0][0]) - flowTime;
-                        const timeGap2 = parseInt(HitObjects[i][0][1]) - flowTime;
                         //처음 누를 때가 지나갔는데 키를 누르고있지 않다면
-                        if ((timeGap <= -timeCutLine) && !keyBoard[alpha]['pressing']) {
+                        if (((parseInt(HitObjects[i][0][0]) + timeCutLine) <= flowTime) && !keyBoard[alpha]['pressing']) {
                             HitObjects[i].shift();
                             hitMiss('miss');
                         }
-                        //마지막 뗄 떼가 지나가면
-                        else if (timeGap2 <= -timeCutLine) {
+                        // 마지막 뗄 때가 지났는데도 키를 누르고있다면.
+                        // 키를 눌렀는지는 확인하지 않아도 된다. 잘 떼었다면 hitLogic에서 HitObjects[i]를 shift해주기 때문에.
+                        else if ((parseInt(HitObjects[i][0][1]) + timeCutLine) <= flowTime) {
                             HitObjects[i].shift();
                             hitMiss('miss');
                         }
@@ -512,7 +518,7 @@
                 }
             }
         }
-        function hitMiss(what) {
+        function hitMiss(what, idx) {
             comboFontSize = 60; hitFontSize = 60;
             if (what == 'miss') {
                 missSound.currentTime = 0;
@@ -520,6 +526,8 @@
                 combo = 0; hitStatus = "miss";
             }
             else if (typeof what == 'number') {
+                //이펙트에 사용되는 변수
+                hitEffectTime[idx] = 20;
                 //300 200 100점이 있다.
                 combo++; hitStatus = what;
                 score += combo * what;
@@ -531,8 +539,8 @@
                 comboFontSize--;
             if (hitFontSize > 50)
                 hitFontSize--;
-            for (let i = 0; i < hitRadius.length; i++) {
-                if (hitRadius[i] != 0) hitRadius[i]--;
+            for (let i = 0; i < hitEffectTime.length; i++) {
+                if (hitEffectTime[i] != 0) hitEffectTime[i]--;
             }
         }
         function draw() {
@@ -604,16 +612,42 @@
             else if (hitStatus == 100) ctx.fillStyle = "#4444ff";
             ctx.fillText(hitStatus, width / 2 - 20, height - keyHeight - 300);
             //이펙트 그리기
+            const grad = ctx.createLinearGradient(0, height - 500, 0, height);
+            grad.addColorStop(0, 'rgb(255, 165, 0, 0)');
+            grad.addColorStop(1, 'rgb(255, 165, 0, 0.7)');
             for (let i = 0; i < keySize; i++) {
-                if (hitRadius[i] != 0) {
+                if (hitEffectTime[i] != 0) {
+                    //주황색 반투명 그라디언트
+                    ctx.fillStyle = grad;
+                    ctx.fillRect(keyGapPixel + oneWidth * i, height - 500, oneWidth - keyGapPixel, height);
+                    // 십자가 모양 반투명 곡선
+                    ctx.strokeStyle = "orange";
+                    if (hitEffectTime[i]>10)
+                        ctx.lineWidth = 10;
+                    else
+                        ctx.lineWidth = hitEffectTime[i] -1;
+                    
                     ctx.beginPath();
-                    ctx.arc(oneWidth * (i + 0.5), height - keyHeight - 5, hitRadius[i] + 10, 0, 2 * Math.PI);
-                    ctx.fillStyle = `rgb(${100 + Math.floor(Math.random() * 156)},${100 + Math.floor(Math.random() * 156)},${100 + Math.floor(Math.random() * 156)})`;
-                    ctx.fill();
-                    ctx.beginPath();
-                    ctx.arc(oneWidth * (i + 0.5), height - keyHeight - 5, hitRadius[i], 0, 2 * Math.PI);
-                    ctx.fillStyle = "orange";
-                    ctx.fill();
+                    ctx.moveTo(oneWidth * i+oneWidth/2, height - keyHeight - 50);
+                    ctx.quadraticCurveTo(oneWidth * i+oneWidth/2 - hitEffectTime[i], height - keyHeight, oneWidth * i+oneWidth/2, height - keyHeight + 50);
+
+                    ctx.moveTo(oneWidth * i+oneWidth/2, height - keyHeight - 50);
+                    ctx.quadraticCurveTo(oneWidth * i+oneWidth/2 + hitEffectTime[i], height - keyHeight, oneWidth * i+oneWidth/2, height - keyHeight + 50);
+
+                    ctx.moveTo(oneWidth * i, height - keyHeight);
+                    ctx.quadraticCurveTo(oneWidth * i+oneWidth/2, height - keyHeight + hitEffectTime[i], oneWidth * i+oneWidth, height - keyHeight);
+
+                    ctx.moveTo(oneWidth * i, height - keyHeight);
+                    ctx.quadraticCurveTo(oneWidth * i+oneWidth/2, height - keyHeight - hitEffectTime[i], oneWidth * i+oneWidth, height - keyHeight);
+                    ctx.stroke();
+                    // ctx.beginPath();
+                    // ctx.arc(oneWidth * (i + 0.5), height - keyHeight - 5, hitEffectTime[i] + 10, 0, 2 * Math.PI);
+                    // ctx.fillStyle = `rgb(${100 + Math.floor(Math.random() * 156)},${100 + Math.floor(Math.random() * 156)},${100 + Math.floor(Math.random() * 156)})`;
+                    // ctx.fill();
+                    // ctx.beginPath();
+                    // ctx.arc(oneWidth * (i + 0.5), height - keyHeight - 5, hitEffectTime[i], 0, 2 * Math.PI);
+                    // ctx.fillStyle = "orange";
+                    // ctx.fill();
                 }
             }
         }

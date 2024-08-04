@@ -145,7 +145,7 @@
                         return;
                     }
                     songName = event.target.result.songName;
-                    youtubeVideoId = event.target.result.youtubeId;
+                    youtubeVideoId = event.target.result.youtubeVideoId;
                     const beatmap = beatmapObjectStore.get(Number(beatmapId));
                     beatmap.onsuccess = (event) => {
                         fileName = event.target.result.beatmapName;

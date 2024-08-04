@@ -166,6 +166,14 @@ app.get('/addSong/:num', (req, res) => {
     }
 })
 
+app.get('/applyYoutubeVideoId/:songName/:youtubeVideoId', async(req, res) => {
+    const songName = req.params.songName;
+    const youtubeVideoId = req.params.youtubeVideoId;
+    fs.writeFileSync(`./songs/${songName}/youtubeVideoId.txt`, youtubeVideoId);
+    await DB.queryPromise(`UPDATE songs SET youtubeVideoId = "${youtubeVideoId}" WHERE songName = "${songName}"`);
+    res.send("적용에 성공했습니다. 곡 가져오기/최신화를 해주세요");
+})
+
 server.listen(10101, () => {
     console.log('listening on *:10101');
 });

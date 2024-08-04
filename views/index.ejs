@@ -218,7 +218,7 @@
                 $("#madeBy").text(`작곡가 or 만든이: ${songs[songIndex].songName.match(/[^0-9-]+/)[0]}`);
                 $("#infoSongName").text(`제목: ${songs[songIndex].songName.match(/(?<=-)[\s\S]+/)[0]}`);
                 $("#songDuration").text(`곡 길이: ${parseInt(songs[songIndex].duration / 60)}분${songs[songIndex].duration % 60}초 (${songs[songIndex].duration}초)`);
-                $("#youtubeVideoId").text(`유튜브videoId: ${songs[songIndex].youtubeVideoId}`);
+                $("#youtubeVideoId").html(`유튜브videoId: ${songs[songIndex].youtubeVideoId} <button type="button" class="btn btn-danger p-0" data-bs-toggle="modal" data-bs-target="#youtubeModal" onclick="openYoutubeModal()">video id수정하기</button>`);
                 $("#songTag").text(`태그: ${songs[songIndex].Tags}`);
             }
         }
@@ -308,6 +308,32 @@
                 }
             });
             // 서버에서 오류 또는 성공 응답 받기
+        }
+        function openYoutubeModal() {
+            //songs가 없다면 리턴
+            if(songs.length == 0)
+                return;
+            $("#youtubeVideoIdInput").val(songs[songIndex].youtubeVideoId);
+            $("#youtubeIframe").attr('src', `https://www.youtube.com/embed/${songs[songIndex].youtubeVideoId}`);
+            console.log(songs[songIndex].youtubeVideoId);
+        }
+        function changeYoutubeIframeSrc() {
+            $("#youtubeIframe").attr('src', `https://www.youtube.com/embed/${$("#youtubeVideoIdInput").val()}`);
+        }
+        function applyYoutubeVideoId() {
+            // 링크가 안이상하면 서버에 전송
+            $.ajax({
+                //songName
+                url: `/applyYoutubeVideoId/${songs[songIndex].songName}/${$("#youtubeVideoIdInput").val()}`,
+                type: "get",
+                async: true,
+                success: function (data) {
+                    alert(data);
+                },
+                error: function (error) {
+                    console.log(error);
+                }
+            });
         }
         //document가 로드되면.
         $(function () {
@@ -476,9 +502,9 @@
 
             <div class="col-4 d-flex justify-content-end">
                 <button type="button" class="btn btn-primary me-2" data-bs-toggle="modal"
-                    data-bs-target="#myModal">도움말</button>
+                    data-bs-target="#helpModal">도움말</button>
                 <!-- The Modal -->
-                <div class="modal fade" id="myModal">
+                <div class="modal fade" id="helpModal">
                     <div class="modal-dialog">
                         <div class="modal-content">
                             <!-- Modal Header -->
@@ -583,7 +609,11 @@
                         <li class="list-group-item" id="madeBy">만든이:</li>
                         <li class="list-group-item" id="infoSongName">제목:</li>
                         <li class="list-group-item" id="songDuration">곡 길이:</li>
-                        <li class="list-group-item" id="youtubeVideoId">유튜브videoId:</li>
+                        <li class="list-group-item" id="youtubeVideoId">
+                            유튜브videoId: vaers50 
+                            <button type="button" class="btn btn-danger p-0" data-bs-toggle="modal"
+                                data-bs-target="#youtubeModal" onclick="openYoutubeModal()">video id수정하기</button>
+                        </li>
                         <li class="list-group-item" id="songTag">태그:</li>
                     </ul>
                     <ul class="list-group list-group-horizontal" id="beatmapLists">
@@ -591,6 +621,31 @@
                         <li class="list-group-item flex-fill" data-beatmapId="2">2.12</li>
                         <li class="list-group-item flex-fill" data-beatmapId="3">3.12</li>
                     </ul>
+                    <div class="modal fade" id="youtubeModal">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <!-- Modal Header -->
+                                <div class="modal-header">
+                                    <h4 class="modal-title">youtube video id 수정하기</h4>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <!-- Modal body -->
+                                <div class="modal-body">
+                                    <iframe id="youtubeIframe" width="100%" height="315" src="https://www.youtube.com/embed/X9WE6RsS7Dc" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                                    <input type="text", class="form-control" id="youtubeVideoIdInput" placeholder="youtubeVideoId를 입력해주세요" value="_-PRI3MNc8s">
+                                    <p class="m-0">입력하거나 바꾸고싶은 youtubeVideoId를 입력해주세요.</p>
+                                    <p class="m-0">youtube를 볼때, 링크를 보면</p>
+                                    <p class="m-0">https://www.youtube.com/watch?v=_-PRI3MNc8s</p>
+                                    <p class="m-0">형식으로 되어있는데, v=뒤에 나와있는 _-PRI3MNc8s가 youtubeVideoId입니다.</p>
+                                    <button class="btn btn-primary" onclick="changeYoutubeIframeSrc()">테스트하기</button>
+                                    <p class="m-0">테스트하여 유튜브 재생이 되면 적용하기 눌러주세요.</p>
+                                    <p class="m-0">일부 영상은 다른 도메인에서 재생을 막아놓았기 때문에 다른 영상으로 대체하셔야 합니다.</p>
+                                    <p class="m-0">빈칸은 유튜브 영상이 없는것으로 간주합니다.</p>
+                                    <button class="btn btn-primary" onclick="applyYoutubeVideoId()">적용하기</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

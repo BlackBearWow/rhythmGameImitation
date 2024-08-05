@@ -60,7 +60,7 @@
         let hitStatus = ''; //miss hit
         let hitFontSize = 60;
         // hit이펙트
-        let hitEffectTime; //배열로 
+        let hitEffect; //배열로 {time:0, color:'rgb(255,255,0)'}
         // 2. This code loads the IFrame Player API code asynchronously.
         let tag = document.createElement('script');
         tag.src = "https://www.youtube.com/iframe_api";
@@ -83,8 +83,6 @@
                     getFileData();
                     $("#can").keydown(function (e) {
                         if (e.key == 'a' | e.key == 's' | e.key == 'd' | e.key == 'f' | e.key == ' ' | e.key == 'j' | e.key == 'k' | e.key == 'l' | e.key == ';') {
-                            // holdDelayTime을 만든다. holdDelayTime은 처음 press되었을 때 parseInt(HitObjects[i][0][0])으로 초기화한다.
-                            // 그 이후 pressing 판정일 때 hit하면 +50한다. pressing판정은 flowTime이 holdDelayTime이상일 때 hit되는 판정으로 한다.
                             //처음 눌렀을때만 press가 true가 된다.
                             if (keyBoard[e.key]['pressing'] == false)
                                 keyBoard[e.key]['press'] = true;
@@ -243,7 +241,9 @@
                 if (!((keySize == 4) || (keySize == 5) || (keySize == 6) || (keySize == 7) || (keySize == 8))) {
                     alertAndHistoryBack('4 5 6 7 8키만 지원합니다');
                 }
-                hitEffectTime = new Array(parseInt(keySize)).fill(0);
+                hitEffect = new Array(parseInt(keySize));
+                for (let i = 0; i < keySize; i++)
+                    hitEffect[i] = { time: 0, color: 'rgb(255,255,0)' };
                 width = keySize * oneWidth;
                 can.width = width;
                 $('#gameScoreDiv').css('left', 200 + width);
@@ -267,21 +267,22 @@
             }
         }
         function setBackGround() {
+            //youtube가 있다면 배경이미지를 설정하지 않음.
+            if (youtubeVideoId)
+                return;
             //Background and Video events가 배열이라면 배경과 영상이 배열에 담겨있고, 배열이 아니라면 배경이다.
             if (typeof (Events['Background and Video events']) == "string") {
                 $('#mainDiv').append(`<img src="/songs/${songName}/${Events['Background and Video events'].match(/(?<=")[^"]+/)[0]}" style="width: 100%;position: absolute;object-fit: cover;z-index:-1">`);
             }
             //info.txt를 만들며 해당 코드는 사용하지 않는다.
             else {
-                if (!youtubeVideoId) {
-                    if (Events['Background and Video events'][0].startsWith("0,")) {
-                        //0번째 index가 배경이미지일경우
-                        $('#mainDiv').append(`<img src="/songs/${songName}/${Events['Background and Video events'][0].match(/(?<=")[^"]+/)[0]}" style="width: 100%;position: absolute;object-fit: cover;z-index:-1">`)
-                    }
-                    else {
-                        //1번째 index가 배경이미지일경우
-                        $('#mainDiv').append(`<img src="/songs/${songName}/${Events['Background and Video events'][1].match(/(?<=")[^"]+/)[0]}" style="width: 100%;position: absolute;object-fit: cover;z-index:-1">`)
-                    }
+                if (Events['Background and Video events'][0].startsWith("0,")) {
+                    //0번째 index가 배경이미지일경우
+                    $('#mainDiv').append(`<img src="/songs/${songName}/${Events['Background and Video events'][0].match(/(?<=")[^"]+/)[0]}" style="width: 100%;position: absolute;object-fit: cover;z-index:-1">`)
+                }
+                else {
+                    //1번째 index가 배경이미지일경우
+                    $('#mainDiv').append(`<img src="/songs/${songName}/${Events['Background and Video events'][1].match(/(?<=")[^"]+/)[0]}" style="width: 100%;position: absolute;object-fit: cover;z-index:-1">`)
                 }
             }
         }
@@ -475,8 +476,8 @@
                                 // flowTime이 holdDelayTime이상일 경우
                                 if (flowTime >= keyBoard[alpha]['holdDelayTime']) {
                                     hitMiss(300, i);
-                                    // 1초에 20번까지 hit된다.
-                                    keyBoard[alpha]['holdDelayTime'] += 50;
+                                    // 1초에 10번까지 hit된다.
+                                    keyBoard[alpha]['holdDelayTime'] += 100;
                                 }
                             }
                         }
@@ -527,8 +528,14 @@
             }
             else if (typeof what == 'number') {
                 //이펙트에 사용되는 변수
-                hitEffectTime[idx] = 20;
+                hitEffect[idx].time = 20;
                 //300 200 100점이 있다.
+                if (what == 300)
+                    hitEffect[idx].color = 'rgb(255,255,0)';
+                else if (what == 200)
+                    hitEffect[idx].color = 'rgb(255,200,0)';
+                else if (what == 100)
+                    hitEffect[idx].color = 'rgb(255,140,0)';
                 combo++; hitStatus = what;
                 score += combo * what;
                 $('#gameScore').text(`score:${score}`);
@@ -539,8 +546,8 @@
                 comboFontSize--;
             if (hitFontSize > 50)
                 hitFontSize--;
-            for (let i = 0; i < hitEffectTime.length; i++) {
-                if (hitEffectTime[i] != 0) hitEffectTime[i]--;
+            for (let i = 0; i < hitEffect.length; i++) {
+                if (hitEffect[i].time != 0) hitEffect[i].time--;
             }
         }
         function draw() {
@@ -603,51 +610,45 @@
         }
         function drawComboAndHitStatus() {
             ctx.fillStyle = "white";
-            ctx.font = `${comboFontSize}px Comic Arial`;
-            ctx.fillText(combo, width / 2 - 20, height - keyHeight - 500);
+            ctx.font = `${60}px Comic Arial`;
+            let textWidth = ctx.measureText(combo).width;
+            ctx.fillText(combo, width / 2 - textWidth / 2, height - keyHeight - 600 + comboFontSize);
             ctx.font = `${hitFontSize}px Comic Arial`;
             if (hitStatus == 'miss') ctx.fillStyle = "red";
-            else if (hitStatus == 300) ctx.fillStyle = "#8888ff";
-            else if (hitStatus == 200) ctx.fillStyle = "#6666ff";
-            else if (hitStatus == 100) ctx.fillStyle = "#4444ff";
-            ctx.fillText(hitStatus, width / 2 - 20, height - keyHeight - 300);
+            else if (hitStatus == 300) ctx.fillStyle = 'rgb(255,255,0, 0.8)';
+            else if (hitStatus == 200) ctx.fillStyle = 'rgb(255,200,0, 0.8)';
+            else if (hitStatus == 100) ctx.fillStyle = 'rgb(255,140,0, 0.8)';
+            textWidth = ctx.measureText(hitStatus).width;
+            ctx.fillText(hitStatus, width / 2 - textWidth / 2, height - keyHeight - 300);
             //이펙트 그리기
             const grad = ctx.createLinearGradient(0, height - 500, 0, height);
             grad.addColorStop(0, 'rgb(255, 165, 0, 0)');
             grad.addColorStop(1, 'rgb(255, 165, 0, 0.7)');
             for (let i = 0; i < keySize; i++) {
-                if (hitEffectTime[i] != 0) {
+                if (hitEffect[i].time != 0) {
                     //주황색 반투명 그라디언트
                     ctx.fillStyle = grad;
                     ctx.fillRect(keyGapPixel + oneWidth * i, height - 500, oneWidth - keyGapPixel, height);
                     // 십자가 모양 반투명 곡선
-                    ctx.strokeStyle = "orange";
-                    if (hitEffectTime[i]>10)
+                    ctx.strokeStyle = hitEffect[i].color;
+                    if (hitEffect[i].time > 10)
                         ctx.lineWidth = 10;
                     else
-                        ctx.lineWidth = hitEffectTime[i] -1;
-                    
+                        ctx.lineWidth = hitEffect[i].time - 1;
+
                     ctx.beginPath();
-                    ctx.moveTo(oneWidth * i+oneWidth/2, height - keyHeight - 50);
-                    ctx.quadraticCurveTo(oneWidth * i+oneWidth/2 - hitEffectTime[i], height - keyHeight, oneWidth * i+oneWidth/2, height - keyHeight + 50);
+                    ctx.moveTo(oneWidth * i + oneWidth / 2, height - keyHeight - 50);
+                    ctx.quadraticCurveTo(oneWidth * i + oneWidth / 2 - hitEffect[i].time, height - keyHeight, oneWidth * i + oneWidth / 2, height - keyHeight + 50);
 
-                    ctx.moveTo(oneWidth * i+oneWidth/2, height - keyHeight - 50);
-                    ctx.quadraticCurveTo(oneWidth * i+oneWidth/2 + hitEffectTime[i], height - keyHeight, oneWidth * i+oneWidth/2, height - keyHeight + 50);
-
-                    ctx.moveTo(oneWidth * i, height - keyHeight);
-                    ctx.quadraticCurveTo(oneWidth * i+oneWidth/2, height - keyHeight + hitEffectTime[i], oneWidth * i+oneWidth, height - keyHeight);
+                    ctx.moveTo(oneWidth * i + oneWidth / 2, height - keyHeight - 50);
+                    ctx.quadraticCurveTo(oneWidth * i + oneWidth / 2 + hitEffect[i].time, height - keyHeight, oneWidth * i + oneWidth / 2, height - keyHeight + 50);
 
                     ctx.moveTo(oneWidth * i, height - keyHeight);
-                    ctx.quadraticCurveTo(oneWidth * i+oneWidth/2, height - keyHeight - hitEffectTime[i], oneWidth * i+oneWidth, height - keyHeight);
+                    ctx.quadraticCurveTo(oneWidth * i + oneWidth / 2, height - keyHeight + hitEffect[i].time, oneWidth * i + oneWidth, height - keyHeight);
+
+                    ctx.moveTo(oneWidth * i, height - keyHeight);
+                    ctx.quadraticCurveTo(oneWidth * i + oneWidth / 2, height - keyHeight - hitEffect[i].time, oneWidth * i + oneWidth, height - keyHeight);
                     ctx.stroke();
-                    // ctx.beginPath();
-                    // ctx.arc(oneWidth * (i + 0.5), height - keyHeight - 5, hitEffectTime[i] + 10, 0, 2 * Math.PI);
-                    // ctx.fillStyle = `rgb(${100 + Math.floor(Math.random() * 156)},${100 + Math.floor(Math.random() * 156)},${100 + Math.floor(Math.random() * 156)})`;
-                    // ctx.fill();
-                    // ctx.beginPath();
-                    // ctx.arc(oneWidth * (i + 0.5), height - keyHeight - 5, hitEffectTime[i], 0, 2 * Math.PI);
-                    // ctx.fillStyle = "orange";
-                    // ctx.fill();
                 }
             }
         }
@@ -655,7 +656,25 @@
 </head>
 
 <body>
-    <div id="mainDiv" class="position-relative overflow-hidden" style="height:100vh">
+    <div id="mainDiv" class="overflow-hidden m-0 p-0" style="height:100vh">
+        <div class="position-absolute" id="youtubePlayer" style="z-index:-1"></div>
+        <div class="row">
+            <div class="col-1"></div>
+            <div class="col-3" style="height: 100vh;">
+                <canvas class="border" id="can" style="height:100%;opacity:1;" width="400px" tabindex='1'></canvas>
+            </div>
+            <div class="col-3">
+                <div class="progress flex-fill" role="progressbar" style="height: 25px;">
+                    <div class="progress-bar progress-bar-striped text-bg-warning" id="progressBar" style="width:50%">현재
+                        초/전체 초</div>
+                </div>
+            </div>
+        </div>
+        <!-- <div class="position-absolute" style="top:0px;left:600px;height:100%;" id="gameScoreDiv">
+            <a id="gameScore" style="color:white;background-color:black;font-size: 40px;">score:0</a>
+        </div> -->
+    </div>
+    <!--div id="mainDiv" class="position-relative overflow-hidden" style="height:100vh">
         <div id="youtubePlayer"></div>
         <div class="position-absolute" style="top:0px;left:200px;height:100%;">
             <canvas class="border" id="can" style="height:100%;opacity:1;" width="400px" tabindex='1'></canvas>
@@ -663,7 +682,7 @@
         <div class="position-absolute" style="top:0px;left:600px;height:100%;" id="gameScoreDiv">
             <a id="gameScore" style="color:white;background-color:black;font-size: 40px;">score:0</a>
         </div>
-    </div>
+    </div-->
 </body>
 
 </html>

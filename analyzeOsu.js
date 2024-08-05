@@ -22,7 +22,7 @@ function analyseGeneral(General) {
         General = General[0].trim();
         let temp = {};
         General.split('\n').forEach((val, index) => {
-            temp[val.split(':')[0].trim()] = val.split(':')[1].trim();
+            temp[val.split(':')[0].trim()] = val.substr(val.indexOf(':')+1).trim();
         })
         General = temp;
         return General;
@@ -33,7 +33,7 @@ function analyseEditor(Editor) {
         Editor = Editor[0].trim();
         let temp = {};
         Editor.split('\n').forEach((val, index) => {
-            temp[val.split(':')[0].trim()] = val.split(':')[1].trim();
+            temp[val.split(':')[0].trim()] = val.substr(val.indexOf(':')+1).trim();
         })
         Editor = temp;
         return Editor;
@@ -44,7 +44,7 @@ function analyseMetadata(Metadata) {
         Metadata = Metadata[0].trim();
         let temp = {};
         Metadata.split('\n').forEach((val, index) => {
-            temp[val.split(':')[0].trim()] = val.split(':')[1].trim();
+            temp[val.split(':')[0].trim()] = val.substr(val.indexOf(':')+1).trim();
         })
         Metadata = temp;
         return Metadata;
@@ -55,7 +55,7 @@ function analyseDifficulty(Difficulty) {
         Difficulty = Difficulty[0].trim();
         let temp = {};
         Difficulty.split('\n').forEach((val, index) => {
-            temp[val.split(':')[0].trim()] = val.split(':')[1].trim();
+            temp[val.split(':')[0].trim()] = val.substr(val.indexOf(':')+1).trim();
         })
         Difficulty = temp;
         return Difficulty;

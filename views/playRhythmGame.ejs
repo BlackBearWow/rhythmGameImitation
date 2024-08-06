@@ -272,17 +272,17 @@
                 return;
             //Background and Video events가 배열이라면 배경과 영상이 배열에 담겨있고, 배열이 아니라면 배경이다.
             if (typeof (Events['Background and Video events']) == "string") {
-                $('#mainDiv').append(`<img src="/songs/${songName}/${Events['Background and Video events'].match(/(?<=")[^"]+/)[0]}" style="width: 100%;position: absolute;object-fit: cover;z-index:-1">`);
+                $('#mainDiv').prepend(`<img src="/songs/${songName}/${Events['Background and Video events'].match(/(?<=")[^"]+/)[0]}" style="width: 100%;height:100%;position: absolute;object-fit: cover;z-index:-1">`);
             }
             //info.txt를 만들며 해당 코드는 사용하지 않는다.
             else {
                 if (Events['Background and Video events'][0].startsWith("0,")) {
                     //0번째 index가 배경이미지일경우
-                    $('#mainDiv').append(`<img src="/songs/${songName}/${Events['Background and Video events'][0].match(/(?<=")[^"]+/)[0]}" style="width: 100%;position: absolute;object-fit: cover;z-index:-1">`)
+                    $('#mainDiv').prepend(`<img src="/songs/${songName}/${Events['Background and Video events'][0].match(/(?<=")[^"]+/)[0]}" style="width: 100%;height:100%;position: absolute;object-fit: cover;z-index:-1">`)
                 }
                 else {
                     //1번째 index가 배경이미지일경우
-                    $('#mainDiv').append(`<img src="/songs/${songName}/${Events['Background and Video events'][1].match(/(?<=")[^"]+/)[0]}" style="width: 100%;position: absolute;object-fit: cover;z-index:-1">`)
+                    $('#mainDiv').prepend(`<img src="/songs/${songName}/${Events['Background and Video events'][1].match(/(?<=")[^"]+/)[0]}" style="width: 100%;height:100%;position: absolute;object-fit: cover;z-index:-1">`)
                 }
             }
         }
@@ -367,8 +367,8 @@
             ctx.fillRect(0, 0, width, height);
             ctx.fillStyle = "white";
             ctx.font = "70px Comic Arial";
-            ctx.fillText("press", 40, 300);
-            ctx.fillText("  J  ", 40, 400);
+            let textWidth = ctx.measureText("press J").width;
+            ctx.fillText("press J", width/2 - textWidth/2, 400);
             youtubeVideoIdSetting();
         }
         function youtubeVideoIdSetting() {
@@ -421,6 +421,7 @@
                     }
                 }, 2000);
                 //General['AudioLeadIn']은 전체적인 시작 자체를 늦추는 것이다. 오디오만의 싱크를 위한 것이 아님.
+                $("#progressBar").addClass("progress-bar-animated");
                 $("#can").off("keydown", startRhythmGame);
                 requestAnimationFrame(oneFrame);
             }
@@ -538,7 +539,6 @@
                     hitEffect[idx].color = 'rgb(255,140,0)';
                 combo++; hitStatus = what;
                 score += combo * what;
-                $('#gameScore').text(`score:${score}`);
             }
         }
         function fontSizeCalculate() {
@@ -556,6 +556,7 @@
             drawBackGround();
             drawNotes();
             drawComboAndHitStatus();
+            updateProgressAndScore();
         }
         function drawBackGround() {
             //검정 배경
@@ -615,9 +616,9 @@
             ctx.fillText(combo, width / 2 - textWidth / 2, height - keyHeight - 600 + comboFontSize);
             ctx.font = `${hitFontSize}px Comic Arial`;
             if (hitStatus == 'miss') ctx.fillStyle = "red";
-            else if (hitStatus == 300) ctx.fillStyle = 'rgb(255,255,0, 0.8)';
-            else if (hitStatus == 200) ctx.fillStyle = 'rgb(255,200,0, 0.8)';
-            else if (hitStatus == 100) ctx.fillStyle = 'rgb(255,140,0, 0.8)';
+            else if (hitStatus == 300) ctx.fillStyle = 'rgb(255,255,0, 0.9)';
+            else if (hitStatus == 200) ctx.fillStyle = 'rgb(255,200,0, 0.9)';
+            else if (hitStatus == 100) ctx.fillStyle = 'rgb(255,140,0, 0.9)';
             textWidth = ctx.measureText(hitStatus).width;
             ctx.fillText(hitStatus, width / 2 - textWidth / 2, height - keyHeight - 300);
             //이펙트 그리기
@@ -652,37 +653,30 @@
                 }
             }
         }
+        function updateProgressAndScore() {
+            $("#progressBar").text(`${parseInt(bgm.currentTime)}/${parseInt(bgm.duration)}`);
+            $("#progressBar").width(`${100 * bgm.currentTime / bgm.duration}%`);
+            $('#gameScore').text(`score:${score}`);
+        }
     </script>
 </head>
 
 <body>
-    <div id="mainDiv" class="overflow-hidden m-0 p-0" style="height:100vh">
+    <div id="mainDiv" class="container-fluid p-0 overflow-hidden" style="height:100vh">
         <div class="position-absolute" id="youtubePlayer" style="z-index:-1"></div>
         <div class="row">
-            <div class="col-1"></div>
-            <div class="col-3" style="height: 100vh;">
-                <canvas class="border" id="can" style="height:100%;opacity:1;" width="400px" tabindex='1'></canvas>
-            </div>
-            <div class="col-3">
+            <div class="col-2 pe-0">
                 <div class="progress flex-fill" role="progressbar" style="height: 25px;">
-                    <div class="progress-bar progress-bar-striped text-bg-warning" id="progressBar" style="width:50%">현재
+                    <div class="progress-bar progress-bar-striped text-bg-warning fs-5" id="progressBar" style="width:50%">현재
                         초/전체 초</div>
                 </div>
+                <p id="gameScore" class="text-bg-dark fs-5">score:10000000</p>
+            </div>
+            <div class="col-3 m-0 p-0" style="height: 100vh;">
+                <canvas class="border" id="can" style="height:100%;opacity:1;" width="400px" tabindex='1'></canvas>
             </div>
         </div>
-        <!-- <div class="position-absolute" style="top:0px;left:600px;height:100%;" id="gameScoreDiv">
-            <a id="gameScore" style="color:white;background-color:black;font-size: 40px;">score:0</a>
-        </div> -->
     </div>
-    <!--div id="mainDiv" class="position-relative overflow-hidden" style="height:100vh">
-        <div id="youtubePlayer"></div>
-        <div class="position-absolute" style="top:0px;left:200px;height:100%;">
-            <canvas class="border" id="can" style="height:100%;opacity:1;" width="400px" tabindex='1'></canvas>
-        </div>
-        <div class="position-absolute" style="top:0px;left:600px;height:100%;" id="gameScoreDiv">
-            <a id="gameScore" style="color:white;background-color:black;font-size: 40px;">score:0</a>
-        </div>
-    </div-->
 </body>
 
 </html>

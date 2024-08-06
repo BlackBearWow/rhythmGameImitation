@@ -120,7 +120,8 @@ app.get('/addSong/:num', (req, res) => {
                     else {
                         //AudioFilename, bg가 아니라면 파일 삭제
                         if (val != AudioFilename && val != backgroundImage) {
-                            fs.unlinkSync(`./songs/${songName}/${val}`);
+                            //디렉토리일수도 있어서 rmSync로 호출한다.
+                            fs.rmSync(`./songs/${songName}/${val}`, { recursive: true, force: true });
                         }
                     }
                 })

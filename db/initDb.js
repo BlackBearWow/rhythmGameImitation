@@ -13,7 +13,7 @@ function getDuration(path) {
 async function main() {
     try {
         // rhythm DB 삭제.
-        await DB.queryPromise('DROP DATABASE rhythm', false);
+        await DB.queryPromise('DROP DATABASE IF EXISTS rhythm', false);
         // rhythm DB가 있는지 확인. 없다면 생성
         await DB.queryPromise('CREATE DATABASE IF NOT EXISTS rhythm DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;', false);
 
